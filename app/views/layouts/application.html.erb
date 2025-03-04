@@ -1,30 +1,32 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title><%= content_for(:title) || "Boutique" %></title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <%= csrf_meta_tags %>
-    <%= csp_meta_tag %>
+<head>
+  <title>Boutique</title>
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+  <%= javascript_include_tag "application", "data-turbo-track": "reload", defer: true %>
+  <%= javascript_importmap_tags %>
+</head>
+<body class="bg-gray-100 text-gray-900">
 
-    <%= yield :head %>
+  <nav class="bg-blue-600 text-white p-4">
+    <div class="container mx-auto flex justify-between items-center">
+      <h1 class="text-xl font-bold">Boutique</h1>
+      <ul class="flex space-x-4">
+        <li><a href="<%= root_path %>" class="hover:underline">Accueil</a></li>
+        <li><a href="<%= clients_path %>" class="hover:underline">Clients</a></li>
+        <li><a href="<%= produits_path %>" class="hover:underline">Produits</a></li>
+        <li><a href="<%= ventes_path %>" class="hover:underline">Ventes</a></li>
+        <li><a href="<%= fournisseurs_path %>" class="hover:underline">Fournisseurs</a></li>
+      </ul>
+    </div>
+  </nav>
 
-    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
-    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
+  <div class="max-w-7xl mx-auto p-6">
+    <%= yield %>
+  </div>
 
-    <link rel="icon" href="/icon.png" type="image/png">
-    <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/icon.png">
-
-    <%# Includes all stylesheet files in app/assets/stylesheets %>
-    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
-    <%= javascript_importmap_tags %>
-  </head>
-
-  <body>
-    <main class="container mx-auto mt-28 px-5 flex">
-      <%= yield %>
-    </main>
-  </body>
+</body>
 </html>
+

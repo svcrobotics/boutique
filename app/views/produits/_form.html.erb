@@ -1,0 +1,89 @@
+    <%= form_with(model: produit, local: false) do |form| %>
+
+      <div class="mt-4">
+        <%= form.label :etat, "Etat du produit", class: "block text-sm font-medium text-gray-700" %>
+        <%= form.select :etat, Produit::ETATS_VALIDES.map { |etat| [etat.humanize, etat] }, { prompt: "Sélectionner l'état du produit" }, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
+      </div>
+
+      <!-- Nom -->
+      <div>
+        <%= form.label :nom, "Nom du produit", class: "block text-sm font-medium text-gray-700" %>
+        <%= form.text_field :nom, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
+      </div>
+
+      <!-- Stock -->
+      <div>
+        <%= form.label :stock, "Stock", class: "block text-sm font-medium text-gray-700" %>
+        <%= form.text_field :stock, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
+      </div>
+
+      <!-- Catégorie -->
+      <div class="mt-4">
+        <%= form.label :categorie, "Catégorie", class: "block text-sm font-medium text-gray-700" %>
+        <%= form.select :categorie, Produit::CATEGORIES.map { |categorie| [categorie.humanize, categorie] }, { prompt: "Sélectionner la catégorie du produit" }, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
+      </div>
+
+      <!-- Fournisseur -->
+      <div class="mt-4">
+        <%= form.label :fournisseur_id, "Fournisseur", class: "block text-sm font-medium text-gray-700" %>
+        <%= form.collection_select :fournisseur_id, Fournisseur.all, :id, :nom, { prompt: "Sélectionner un fournisseur" }, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
+      </div>
+
+
+      <!-- Prix d'achat -->
+      <div class="mt-4">
+        <%= form.label :prix_achat, "Prix d'achat", class: "block text-sm font-medium text-gray-700" %>
+        <%= form.number_field :prix_achat, step: 0.01, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>       
+      </div>
+
+      <!-- Prix de vente -->
+      <div class="mt-4">
+        <%= form.label :prix, "Prix de vente", class: "block text-sm font-medium text-gray-700" %>
+        <%= form.number_field :prix, step: 0.01, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
+      </div>
+
+      <!-- Date d'achat -->
+      <div class="mt-4">
+        <%= form.label :date_achat, "Date d'achat", class: "block text-sm font-medium text-gray-700" %>
+        <%= form.date_field :date_achat, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
+      </div>
+
+        <!-- Client déposant -->
+      <div class="mt-4">
+        <%= form.label :client_id, "Client déposant", class: "block text-sm font-medium text-gray-700" %>
+        <%= form.collection_select :client_id, Client.where(deposant: true), :id, :nom, { prompt: "Sélectionner un client" }, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
+      </div>
+
+      <!-- Date de dépôt -->
+      <div class="mt-4">
+        <%= form.label :date_depot, "Date de dépôt", class: "block text-sm font-medium text-gray-700" %>
+        <%= form.date_field :date_depot, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
+      </div>
+
+      <!-- Prix du déposant -->
+      <div class="mt-4">
+        <%= form.label :prix_deposant, "Prix du déposant", class: "block text-sm font-medium text-gray-700" %>
+        <%= form.number_field :prix_deposant, step: 0.01, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
+      </div>
+
+      <!-- Observation -->
+      <div class="mt-4">
+        <%= form.label :observation, "Observation (ex : légère trace d'usure)", class: "block text-sm font-medium text-gray-700" %>
+        <%= form.text_area :observation, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
+      </div>
+
+      <!-- Statut vendu -->
+      <div class="mt-4">
+        <%= form.label :vendu, "Vendu ?", class: "block text-sm font-medium text-gray-700" %>
+        <%= form.check_box :vendu, class: "mt-1 h-5 w-5 text-blue-600 border-gray-300 rounded" %>
+      </div>
+    
+
+      <!-- Boutons -->
+      <div class="flex justify-end space-x-4 mt-6">
+        <%= link_to "Annuler", produits_path, class: "px-4 py-2 bg-gray-300 text-gray-900 rounded-md hover:bg-gray-400" %>
+        <%= form.submit "Enregistrer", class: "px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700" %>
+      </div>
+
+  
+  <% end %>

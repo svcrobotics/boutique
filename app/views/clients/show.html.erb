@@ -1,0 +1,15 @@
+<turbo-frame id="client_details_<%= @client.id %>">
+  <div class="p-4 border-t">
+    <h2 class="text-xl font-bold mb-2">Détails du client</h2>
+    <p><strong>Nom :</strong> <%= @client.nom %></p>
+    <p><strong>Email :</strong> <%= @client.email %></p>
+    <p><strong>Téléphone :</strong> <%= @client.telephone %></p>
+    <p><strong>Déposant :</strong> <%= @client.deposant? ? "Oui" : "Non" %></p>
+    <p><strong>Ancien ID :</strong> <%= @client.ancien_id %></p>
+    
+    <!-- Vous pouvez ajouter ici un lien pour fermer ou remplacer le contenu -->
+    <%= link_to "Fermer", "#", 
+                data: { turbo_frame: "client_details_#{@client.id}", turbo_action: "replace" }, 
+                class: "text-blue-500 hover:underline" %>
+  </div>
+</turbo-frame>

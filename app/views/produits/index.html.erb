@@ -1,0 +1,24 @@
+<%= turbo_frame_tag "first_turbo_frame" do %>
+    <%= link_to "Nouveau produit",
+      new_produit_path,
+      data: { turbo_frame: "second_frame" },
+      class: "bg-green-400 text-white px-4 py-2 rounded" %>
+<% end %>
+
+<h1 class="text-3xl font-bold text-center my-6">Nos Produits</h1>
+
+<!-- Filtres par catégorie -->
+<div class="flex justify-center space-x-4 mb-6">
+  <%= link_to "Tous", produits_path, class: "px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400" %>
+  <%= link_to "Vêtement", produits_path(categorie: "vêtement"), class: "px-4 py-2 bg-blue-400 text-white rounded-md hover:bg-blue-600" %>
+  <%= link_to "Accessoire", produits_path(categorie: "accessoire"), class: "px-4 py-2 bg-blue-400 text-white rounded-md hover:bg-blue-600" %>
+  <%= link_to "Chaussure", produits_path(categorie: "chaussure"), class: "px-4 py-2 bg-blue-400 text-white rounded-md hover:bg-blue-600" %>
+  <%= link_to "Décoration", produits_path(categorie: "deco"), class: "px-4 py-2 bg-blue-400 text-white rounded-md hover:bg-blue-600" %>
+</div>
+
+<!-- Grille des produits -->
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mx-auto max-w-7xl p-4">
+  <% @produits.each do |produit| %>
+    <%= render "produits/produit", produit: produit %>
+  <% end %>
+</div>

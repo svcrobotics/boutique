@@ -1,0 +1,28 @@
+<% content_for :title, "Clients" %>
+
+<h1 class="text-3xl font-bold text-center my-6">Liste des clients</h1>
+
+<div class="flex justify-end mb-4">
+  <%= link_to "Nouveau client", new_client_path, 
+              data: { turbo_frame: dom_id(Client.new) }, 
+              class: "bg-blue-500 text-white px-4 py-2 rounded-md" %>
+</div>
+
+<%= turbo_frame_tag dom_id(Client.new) do %>
+  <!-- Le formulaire de création sera chargé ici -->
+<% end %>
+
+<table class="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
+  <thead class="bg-gray-100 text-gray-700">
+    <tr>
+      <th class="px-4 py-2 text-left">Nom</th>
+      <th class="px-4 py-2 text-left">Email</th>
+      <th class="px-4 py-2 text-left">Téléphone</th>
+      <th class="px-4 py-2 text-left">Déposant</th>
+      <th class="px-4 py-2 text-left">Actions</th>
+    </tr>
+  </thead>
+  <tbody id="clients">
+    <%= render @clients %>
+  </tbody>
+</table>

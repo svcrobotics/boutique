@@ -1,0 +1,48 @@
+<% content_for :title, "Fournisseurs" %>
+
+<div class="w-full">
+  <% if notice.present? %>
+    <p class="py-2 px-3 bg-green-50 mb-5 text-green-500 font-medium rounded-md inline-block" id="notice"><%= notice %></p>
+  <% end %>
+
+<h1 class="text-3xl font-bold text-center my-6">Liste des fournisseurs</h1>
+
+<div class="flex justify-end mb-4">
+  <%= link_to "Nouveau fournisseur", new_fournisseur_path, class: "bg-blue-500 text-white px-4 py-2 rounded-md" %>
+</div>
+
+<table class="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
+  <thead class="bg-gray-100 text-gray-700">
+    <tr>
+      <th class="px-4 py-2 text-left">Nom</th>
+      <th class="px-4 py-2 text-left">Type</th>
+      <th class="px-4 py-2 text-left">Email</th>
+      <th class="px-4 py-2 text-left">Téléphone</th>
+      <th class="px-4 py-2 text-left">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @fournisseurs.each do |fournisseur| %>
+      <tr class="border-b">
+        <td class="px-4 py-2"><%= fournisseur.nom %></td>
+        <td class="px-4 py-2">
+          <% if fournisseur.type_fournisseur == "Société (Neuf)" %>
+            🏢 Société (TVA applicable)
+          <% else %>
+            👤 Particulier / Organisme (Pas de TVA)
+          <% end %>
+        </td>
+        <td class="px-4 py-2"><%= fournisseur.email %></td>
+        <td class="px-4 py-2"><%= fournisseur.telephone %></td>
+        <td class="px-4 py-2 space-x-2">
+          <%= link_to "Voir", fournisseur_path(fournisseur), class: "text-blue-500 hover:underline" %>
+          <%= link_to "Modifier", edit_fournisseur_path(fournisseur), class: "text-yellow-500 hover:underline" %>
+          <%= link_to "Supprimer", fournisseur, method: :delete, data: { confirm: "Êtes-vous sûr ?" }, class: "text-red-500 hover:underline" %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+
+</div>

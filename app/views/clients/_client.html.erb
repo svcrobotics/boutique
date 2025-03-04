@@ -1,0 +1,44 @@
+<!-- Ligne principale avec les informations du client et les liens d'action -->
+<tr id="client_<%= client.id %>" class="border-b">
+  <td class="px-4 py-2"><%= client.nom %></td>
+  <td class="px-4 py-2"><%= client.email %></td>
+  <td class="px-4 py-2"><%= client.telephone %></td>
+  <td class="px-4 py-2">
+    <% if client.deposant? %>
+      ✅
+    <% else %>
+      ❌
+    <% end %>
+  </td>
+  <td class="px-4 py-2 space-x-2">
+    <!-- Lien pour afficher les détails du client -->
+    <%= link_to "Voir", client_path(client), 
+                data: { turbo_frame: "client_details_#{client.id}" },
+                class: "text-blue-500 hover:underline" %>
+    <!-- Lien pour afficher le formulaire d'édition inline -->
+    <%= link_to "Modifier", edit_client_path(client), 
+                data: { turbo_frame: "client_edit_#{client.id}" },
+                class: "text-yellow-500 hover:underline" %>
+    <%= link_to "Supprimer", client_path(client), method: :delete, 
+                data: { turbo_method: :delete, turbo_confirm: "Êtes-vous sûr ?" },
+                class: "text-red-500 hover:underline" %>
+  </td>
+</tr>
+
+<!-- Ligne pour afficher les détails (si nécessaire) -->
+<tr>
+  <td colspan="5">
+    <%= turbo_frame_tag "client_details_#{client.id}" do %>
+      <!-- Ce Turbo Frame sera mis à jour par l'action show -->
+    <% end %>
+  </td>
+</tr>
+
+<!-- Ligne pour afficher le formulaire d'édition -->
+<tr>
+  <td colspan="5">
+    <%= turbo_frame_tag "client_edit_#{client.id}" do %>
+      <!-- Ce Turbo Frame sera mis à jour par l'action edit -->
+    <% end %>
+  </td>
+</tr>

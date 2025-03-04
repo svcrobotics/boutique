@@ -1,0 +1,45 @@
+<%= form_with(model: client, class: "contents") do |form| %>
+  <% if client.errors.any? %>
+    <div id="error_explanation" class="bg-red-50 text-red-500 px-3 py-2 font-medium rounded-md mt-3">
+      <h2><%= pluralize(client.errors.count, "error") %> prohibited this client from being saved:</h2>
+
+      <ul class="list-disc ml-6">
+        <% client.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="my-5">
+    <%= form.label :nom %>
+    <%= form.text_field :nom, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": client.errors[:nom].none?, "border-red-400 focus:outline-red-600": client.errors[:nom].any?}] %>
+  </div>
+
+  <div class="my-5">
+    <%= form.label :email %>
+    <%= form.text_field :email, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": client.errors[:email].none?, "border-red-400 focus:outline-red-600": client.errors[:email].any?}] %>
+  </div>
+
+  <div class="my-5">
+    <%= form.label :telephone %>
+    <%= form.text_field :telephone, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": client.errors[:telephone].none?, "border-red-400 focus:outline-red-600": client.errors[:telephone].any?}] %>
+  </div>
+
+  <div class="my-5">
+    <%= form.label :deposant, "Ce client est un déposant ?" %>
+    <div class="mt-1 flex items-center space-x-2">
+      <%= form.check_box :deposant, class: "h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500" %>
+    </div>
+  </div>
+
+  <!-- Ancien ID (Champ simple toujours visible) -->
+  <div class="my-5">
+    <%= form.label :ancien_id, "Ancien ID" %>
+    <%= form.text_field :ancien_id, class: "block shadow-sm rounded-md border px-3 py-2 mt-2 w-full border-gray-400 focus:outline-blue-600" %>
+  </div>
+
+  <div class="inline">
+    <%= form.submit class: "rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white inline-block font-medium cursor-pointer" %>
+  </div>
+<% end %>

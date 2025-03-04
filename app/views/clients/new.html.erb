@@ -1,0 +1,8 @@
+<% content_for :title, "New client" %>
+<div class="md:w-2/3 w-full">
+  <h1 class="font-bold text-4xl">New client</h1>
+</div>
+
+<%= turbo_frame_tag @client do %>
+    <%= render "form", client: @client %>
+  <% end %>
