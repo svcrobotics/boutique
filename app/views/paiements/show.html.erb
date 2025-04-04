@@ -1,0 +1,12 @@
+<h1>Détail du Paiement</h1>
+
+<p><strong>Client :</strong> <%= @paiement.client.nom %> <%= @paiement.client.prenom %></p>
+<p><strong>Numéro de reçu :</strong> <%= @paiement.numero_recu %></p>
+<p><strong>Montant :</strong> <%= number_to_currency(@paiement.montant) %></p>
+<p><strong>Méthode de paiement :</strong> <%= @paiement.methode_paiement %></p>
+<p><strong>Date de paiement :</strong> <%= l(@paiement.date_paiement) %></p>
+
+<hr>
+
+<%= link_to "Retour à la liste", paiements_path, class: "btn btn-secondary" %>
+<%= link_to "🖨️ Imprimer le reçu", imprimer_paiement_path(@paiement), class: "btn bg-blue-600 hover:bg-blue-700 text-white" %>

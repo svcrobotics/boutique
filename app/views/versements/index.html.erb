@@ -1,0 +1,30 @@
+<h1 class="text-2xl font-bold mb-6">💶 Versements aux déposantes</h1>
+
+<% if @versements.any? %>
+  <table class="table-auto w-full border-collapse border border-gray-300 mb-6">
+    <thead class="bg-gray-100">
+      <tr>
+        <th class="border px-4 py-2 text-left">Date</th>
+        <th class="border px-4 py-2 text-left">Déposante</th>
+        <th class="border px-4 py-2 text-right">Montant total</th>
+        <th class="border px-4 py-2 text-left">Méthode</th>
+        <th class="border px-4 py-2 text-center">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @versements.each do |versement| %>
+        <tr class="border-t">
+          <td class="px-4 py-2"><%= l(versement.date_versement) %></td>
+          <td class="px-4 py-2"><%= versement.client&.prenom %> <%= versement.client&.nom %></td>
+          <td class="px-4 py-2 text-right"><%= number_to_currency(versement.montant) %></td>
+          <td class="px-4 py-2"><%= versement.methode_paiement.capitalize %></td>
+          <td class="px-4 py-2 text-center">
+            <%= link_to "🖨️ Reçu", imprimer_versement_path(versement), method: :post, class: "text-blue-600 hover:underline" %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <p class="italic text-green-700">✅ Aucun versement enregistré pour le moment.</p>
+<% end %>

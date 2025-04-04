@@ -1,0 +1,53 @@
+# Récupérer le fournisseur existant
+senes = Fournisseur.find_by(nom: "Senes")
+
+unless senes
+  puts "❌ Le fournisseur 'Senes' n'existe pas dans la base. Ajoutez-le d'abord."
+  exit
+end
+
+begin
+  date = Date.parse("2025-03-14")
+rescue ArgumentError
+  date = nil
+end
+
+# Liste complète des produits à ajouter
+produits = [
+  { code_fournisseur: "538", nom: "Robe", prix_achat: 15, stock: 6 },
+  { code_fournisseur: "2978", nom: "Robe", prix_achat: 11, stock: 8 },
+  { code_fournisseur: "550", nom: "Top", prix_achat: 10, stock: 12 },
+  { code_fournisseur: "898", nom: "Robe", prix_achat: 16.50, stock: 6 }
+]
+
+produits.each do |prod|
+  # Vérifier si le produit existe déjà avec le même `code_fournisseur`
+  existing_product = Produit.find_by(code_fournisseur: prod[:code_fournisseur])
+
+  if existing_product
+    puts "⚠️ Produit '#{prod[:nom]}' (Code: #{prod[:code_fournisseur]}) existe déjà, il ne sera pas ajouté."
+  else
+    produit = Produit.new(
+      code_fournisseur: prod[:code_fournisseur],
+      nom: prod[:nom],
+      prix_achat: prod[:prix_achat],
+      stock: prod[:stock],
+      fournisseur: senes,
+      etat: "neuf",
+      categorie: "vêtement",
+      impression_code_barre: true, # Ajout de la valeur par défaut
+      date_achat: date
+    )
+
+    if produit.valid?
+      produit.save!
+      puts "✅ Produit '#{produit.nom}' ajouté avec succès."
+    else
+      puts "❌ ERREUR: Impossible d'ajouter '#{produit.nom}'"
+      puts "Problèmes détectés :"
+      puts produit.errors.full_messages.join("\n")
+    end
+  end
+end
+
+puts "🎉 Seed terminé !"

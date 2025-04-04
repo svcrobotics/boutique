@@ -1,45 +1,56 @@
-<turbo-frame id="new_fournisseur">
-  <%= form_with(model: fournisseur, class: "contents") do |form| %>
-    <% if fournisseur.errors.any? %>
-      <div id="error_explanation" class="bg-red-50 text-red-500 px-3 py-2 font-medium rounded-md mt-3">
-        <h2><%= pluralize(fournisseur.errors.count, "error") %> prohibited this fournisseur from being saved:</h2>
+<h1 class="text-2xl font-bold text-center my-6">
+  <%= @fournisseur.new_record? ? "Créer un Fournisseur" : "Modifier le Fournisseur" %>
+</h1>
 
-        <ul class="list-disc ml-6">
-          <% fournisseur.errors.each do |error| %>
-            <li><%= error.full_message %></li>
-          <% end %>
-        </ul>
-      </div>
-    <% end %>
+<!-- 🚀 Affichage des erreurs -->
+<% if @fournisseur.errors.any? %>
+  <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+    <strong>Attention !</strong> Il y a <%= @fournisseur.errors.count %> erreur(s) :
+    <ul class="mt-2">
+      <% @fournisseur.errors.full_messages.each do |message| %>
+        <li class="ml-4">• <%= message %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>
 
-    <div class="my-5">
-      <%= form.label :nom %>
-      <%= form.text_field :nom, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": fournisseur.errors[:nom].none?, "border-red-400 focus:outline-red-600": fournisseur.errors[:nom].any?}] %>
-    </div>
+<%= form_with(model: @fournisseur, local: true) do |form| %>
+  <!-- Nom -->
+  <div class="mb-4">
+    <%= form.label :nom, "Nom du Fournisseur", class: "block text-sm font-medium text-gray-700" %>
+    <%= form.text_field :nom, class: "w-full p-2 border rounded", required: true %>
+  </div>
 
-    <div class="my-5">
-      <%= form.label :type_fournisseur, "Type de fournisseur", class: "block text-sm font-medium text-gray-700" %>
-      <%= form.select :type_fournisseur, ["Société (Neuf)", "Particulier / Organisme (Occasion)"], {}, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
-    </div>
+  <!-- Email -->
+  <div class="mb-4">
+    <%= form.label :email, "Email", class: "block text-sm font-medium text-gray-700" %>
+    <%= form.email_field :email, class: "w-full p-2 border rounded" %>
+  </div>
 
-    <div class="my-5">
-      <%= form.label :email %>
-      <%= form.text_field :email, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": fournisseur.errors[:email].none?, "border-red-400 focus:outline-red-600": fournisseur.errors[:email].any?}] %>
-    </div>
+  <!-- Téléphone -->
+  <div class="mb-4">
+    <%= form.label :telephone, "Téléphone", class: "block text-sm font-medium text-gray-700" %>
+    <%= form.text_field :telephone, class: "w-full p-2 border rounded" %>
+  </div>
 
-    <div class="my-5">
-      <%= form.label :telephone %>
-      <%= form.text_field :telephone, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": fournisseur.errors[:telephone].none?, "border-red-400 focus:outline-red-600": fournisseur.errors[:telephone].any?}] %>
-    </div>
+  <!-- Adresse -->
+  <div class="mb-4">
+    <%= form.label :adresse, "Adresse", class: "block text-sm font-medium text-gray-700" %>
+    <%= form.text_area :adresse, class: "w-full p-2 border rounded" %>
+  </div>
 
-    <div class="my-5">
-      <%= form.label :adresse %>
-      <%= form.textarea :adresse, rows: 4, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": fournisseur.errors[:adresse].none?, "border-red-400 focus:outline-red-600": fournisseur.errors[:adresse].any?}] %>
-    </div>
+  <!-- Type de fournisseur -->
+  <div class="mb-4">
+    <%= form.label :type_fournisseur, "Type de Fournisseur", class: "block text-sm font-medium text-gray-700" %>
+    <%= form.select :type_fournisseur, 
+                    ["Société (Neuf)", "Particulier / Organisme (Occasion)"], 
+                    {}, 
+                    class: "w-full p-2 border rounded" %>
+  </div>
 
-
-    <div class="inline">
-      <%= form.submit class: "rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white inline-block font-medium cursor-pointer" %>
-    </div>
-  <% end %>
-</turbo-frame>
+  <!-- Boutons -->
+  <div class="mt-4 flex space-x-2">
+    <%= link_to "Annuler", fournisseurs_path, class: "px-4 py-2 bg-gray-300 rounded hover:bg-gray-400" %>
+    <%= form.submit "Enregistrer", class: "px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" %>
+  </div>
+<% end %>

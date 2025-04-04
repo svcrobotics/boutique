@@ -1,0 +1,30 @@
+<h1 class="text-2xl font-bold text-center my-6">Liste des Factures</h1>
+
+<table class="min-w-full bg-white shadow-md rounded-lg">
+  <thead>
+    <tr>
+      <th class="px-4 py-2 text-left">Numéro</th>
+      <th class="px-4 py-2 text-left">Date</th>
+      <th class="px-4 py-2 text-left">Montant</th>
+      <th class="px-4 py-2 text-left">Fournisseur</th>
+      <th class="px-4 py-2 text-left">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @factures.each do |facture| %>
+      <tr>
+        <td class="px-4 py-2"><%= facture.numero %></td>
+        <td class="px-4 py-2"><%= facture.date %></td>
+        <td class="px-4 py-2"><%= number_to_currency(facture.montant, unit: "€") %></td>
+        <td class="px-4 py-2"><%= facture.fournisseur.nom %></td>
+        <td class="px-4 py-2">
+          <%= link_to "Voir", facture_path(facture), class: "text-blue-500 hover:underline" %>
+        </td>
+      </tr>
+    <% end %>
+
+    <div class="flex justify-end mt-4">
+      <%= link_to "Nouvelle facture", new_facture_path, class: "bg-blue-500 text-white px-4 py-2 rounded-md" %>
+    </div>
+  </tbody>
+</table>

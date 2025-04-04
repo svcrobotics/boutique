@@ -1,48 +1,45 @@
 <% content_for :title, "Fournisseurs" %>
 
-<div class="w-full">
-  <% if notice.present? %>
-    <p class="py-2 px-3 bg-green-50 mb-5 text-green-500 font-medium rounded-md inline-block" id="notice"><%= notice %></p>
-  <% end %>
+<h1 class="text-3xl font-bold text-center my-6">Liste des Fournisseurs</h1>
 
-<h1 class="text-3xl font-bold text-center my-6">Liste des fournisseurs</h1>
-
-<div class="flex justify-end mb-4">
-  <%= link_to "Nouveau fournisseur", new_fournisseur_path, class: "bg-blue-500 text-white px-4 py-2 rounded-md" %>
-</div>
-
-<table class="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
-  <thead class="bg-gray-100 text-gray-700">
-    <tr>
-      <th class="px-4 py-2 text-left">Nom</th>
-      <th class="px-4 py-2 text-left">Type</th>
-      <th class="px-4 py-2 text-left">Email</th>
-      <th class="px-4 py-2 text-left">Téléphone</th>
-      <th class="px-4 py-2 text-left">Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    <% @fournisseurs.each do |fournisseur| %>
-      <tr class="border-b">
-        <td class="px-4 py-2"><%= fournisseur.nom %></td>
-        <td class="px-4 py-2">
-          <% if fournisseur.type_fournisseur == "Société (Neuf)" %>
-            🏢 Société (TVA applicable)
-          <% else %>
-            👤 Particulier / Organisme (Pas de TVA)
-          <% end %>
-        </td>
-        <td class="px-4 py-2"><%= fournisseur.email %></td>
-        <td class="px-4 py-2"><%= fournisseur.telephone %></td>
-        <td class="px-4 py-2 space-x-2">
-          <%= link_to "Voir", fournisseur_path(fournisseur), class: "text-blue-500 hover:underline" %>
-          <%= link_to "Modifier", edit_fournisseur_path(fournisseur), class: "text-yellow-500 hover:underline" %>
-          <%= link_to "Supprimer", fournisseur, method: :delete, data: { confirm: "Êtes-vous sûr ?" }, class: "text-red-500 hover:underline" %>
-        </td>
+  <table class="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
+    <thead class="bg-gray-100 text-gray-700">
+      <tr>
+        <th class="px-4 py-2 text-left">Nom</th>
+        <th class="px-4 py-2 text-left">Type de Fournisseur</th>
+        <th class="px-4 py-2 text-left">Actions</th>
       </tr>
-    <% end %>
-  </tbody>
-</table>
+    </thead>
+    <tbody>
+      <% if @fournisseurs.any? %>
+        <% @fournisseurs.each do |fournisseur| %>
+          <tr class="border-b">
+            <td class="px-4 py-2"><%= fournisseur.nom %></td>
+            <td class="px-4 py-2"><%= fournisseur.type_fournisseur %></td>
+            <td class="px-4 py-2 flex space-x-2">
+              <%= button_to "Voir", fournisseur_path(fournisseur), 
+                          method: :get, 
+                          class: "px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700" %>
 
+              <%= button_to "Modifier", edit_fournisseur_path(fournisseur), 
+                          method: :get, 
+                          class: "px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600" %>
 
+              <%= button_to "Supprimer", fournisseur_path(fournisseur), 
+                          method: :delete, 
+                          onclick: "return confirm('Êtes-vous sûr de vouloir supprimer ce fournisseur ?')",
+                          class: "px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700" %>
+            </td>
+          </tr>
+        <% end %>
+      <% else %>
+        <tr>
+          <td colspan="7" class="text-center p-4 text-gray-500">Aucun fournisseur enregistré.</td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+<div class="flex justify-end mt-4">
+  <%= link_to "Nouveau fournisseur", new_fournisseur_path, class: "bg-blue-500 text-white px-4 py-2 rounded-md" %>
 </div>

@@ -1,89 +1,175 @@
-    <%= form_with(model: produit, local: false) do |form| %>
+<h1 class="text-2xl font-bold text-center my-6">
+  <%= @produit.new_record? ? "Créer un produit" : "Modifier le produit" %>
+</h1>
 
-      <div class="mt-4">
-        <%= form.label :etat, "Etat du produit", class: "block text-sm font-medium text-gray-700" %>
-        <%= form.select :etat, Produit::ETATS_VALIDES.map { |etat| [etat.humanize, etat] }, { prompt: "Sélectionner l'état du produit" }, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
-      </div>
+<!-- 🚀 Affichage des erreurs -->
+<% if @produit.errors.any? %>
+  <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+    <strong>Attention !</strong> Il y a <%= @produit.errors.count %> erreur(s) :
+    <ul class="mt-2">
+      <% @produit.errors.full_messages.each do |message| %>
+        <li class="ml-4">• <%= message %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>
 
-      <!-- Nom -->
-      <div>
-        <%= form.label :nom, "Nom du produit", class: "block text-sm font-medium text-gray-700" %>
-        <%= form.text_field :nom, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
-      </div>
+<%= form_with(model: @produit, local: true) do |form| %>
+  <!-- État du produit -->
+  <div class="mt-4">
+    <%= form.label :etat, "État du produit", class: "block text-sm font-medium text-gray-700" %>
+    <%= form.select :etat, Produit::ETATS_VALIDES.map { |etat| [etat.humanize, etat] },
+                    { prompt: "Sélectionner l'état du produit" },
+                    class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm",
+                    id: "produit_etat" %>
+  </div>
 
-      <!-- Stock -->
-      <div>
-        <%= form.label :stock, "Stock", class: "block text-sm font-medium text-gray-700" %>
-        <%= form.text_field :stock, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
-      </div>
+  <!-- Nom -->
+  <div>
+    <%= form.label :nom, "Nom du produit", class: "block text-sm font-medium text-gray-700" %>
+    <%= form.text_field :nom, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
+  </div>
 
-      <!-- Catégorie -->
-      <div class="mt-4">
-        <%= form.label :categorie, "Catégorie", class: "block text-sm font-medium text-gray-700" %>
-        <%= form.select :categorie, Produit::CATEGORIES.map { |categorie| [categorie.humanize, categorie] }, { prompt: "Sélectionner la catégorie du produit" }, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
-      </div>
+  <!-- Stock -->
+  <div>
+    <%= form.label :stock, "Stock", class: "block text-sm font-medium text-gray-700" %>
+    <%= form.number_field :stock, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm", id: "produit_stock" %>
+  </div>
 
-      <!-- Fournisseur -->
-      <div class="mt-4">
-        <%= form.label :fournisseur_id, "Fournisseur", class: "block text-sm font-medium text-gray-700" %>
-        <%= form.collection_select :fournisseur_id, Fournisseur.all, :id, :nom, { prompt: "Sélectionner un fournisseur" }, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
-      </div>
+  <!-- Catégorie -->
+  <div class="mt-4">
+    <%= form.label :categorie, "Catégorie", class: "block text-sm font-medium text-gray-700" %>
+    <%= form.select :categorie, Produit::CATEGORIES.map { |categorie| [categorie.humanize, categorie] },
+                    { prompt: "Sélectionner la catégorie du produit" },
+                    class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
+  </div>
 
+  <!-- Champs Neuf/Occasion -->
+  <div id="neuf-occasion-fields" class="<%= @produit.etat == 'neuf' || @produit.etat == 'occasion' ? '' : 'hidden' %>">
+    <div class="mt-4">
+      <%= form.label :fournisseur_id, "Fournisseur", class: "block text-sm font-medium text-gray-700" %>
+      <%= form.collection_select :fournisseur_id, Fournisseur.all, :id, :nom,
+                                 { prompt: "Sélectionner un fournisseur" },
+                                 class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
+    </div>
+    <div class="mt-4">
+      <%= form.label :code_fournisseur, "Code Fournisseur", class: "block text-sm font-medium text-gray-700" %>
+      <%= form.text_field :code_fournisseur, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
+    </div>
+    <div class="mt-4">
+      <%= form.label :prix_achat, "Prix d'achat", class: "block text-sm font-medium text-gray-700" %>
+      <%= form.number_field :prix_achat, step: 0.01, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
+    </div>
+    <div class="mt-4">
+      <%= form.label :date_achat, "Date d'achat", class: "block text-sm font-medium text-gray-700" %>
+      <%= form.date_field :date_achat, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
+    </div>
+  </div>
 
-      <!-- Prix d'achat -->
-      <div class="mt-4">
-        <%= form.label :prix_achat, "Prix d'achat", class: "block text-sm font-medium text-gray-700" %>
-        <%= form.number_field :prix_achat, step: 0.01, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>       
-      </div>
+  <!-- Champs Dépôt-Vente -->
+  <div id="depot-vente-fields" class="<%= @produit.etat == 'depot_vente' ? '' : 'hidden' %>">
+    <%# En dépôt (invisible mais valeur enregistrée) %>
+    <%= form.hidden_field :en_depot, value: true %>
 
-      <!-- Prix de vente -->
-      <div class="mt-4">
-        <%= form.label :prix, "Prix de vente", class: "block text-sm font-medium text-gray-700" %>
-        <%= form.number_field :prix, step: 0.01, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
-      </div>
+    <div class="mt-4">
+      <%= form.label :client_id, "Client déposant", class: "block text-sm font-medium text-gray-700" %>
+      <%= form.collection_select :client_id, Client.where(deposant: true), :id, :nom,
+                                 { prompt: "Sélectionner un déposant" },
+                                 class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
+    </div>
+    <div class="mt-4">
+      <%= form.label :date_depot, "Date de dépôt", class: "block text-sm font-medium text-gray-700" %>
+      <%= form.date_field :date_depot, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm", id: "produit_date_depot" %>
+    </div>
+    <div class="mt-4">
+      <%= form.label :prix_deposant, "Prix du déposant", class: "block text-sm font-medium text-gray-700" %>
+      <%= form.number_field :prix_deposant, step: 0.01,
+                            class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm",
+                            id: "produit_prix_deposant" %>
+    </div>
+    <div class="mt-4">
+      <%= form.label :observation, "Observation", class: "block text-sm font-medium text-gray-700" %>
+      <%= form.text_area :observation, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
+    </div>
+  </div>
 
-      <!-- Date d'achat -->
-      <div class="mt-4">
-        <%= form.label :date_achat, "Date d'achat", class: "block text-sm font-medium text-gray-700" %>
-        <%= form.date_field :date_achat, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
-      </div>
+  <!-- Prix de vente -->
+  <div class="mt-4">
+    <%= form.label :prix, "Prix de vente", class: "block text-sm font-medium text-gray-700" %>
+    <%= form.number_field :prix, step: 0.01,
+                    class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm",
+                    id: "produit_prix" %>
+  </div>
 
-        <!-- Client déposant -->
-      <div class="mt-4">
-        <%= form.label :client_id, "Client déposant", class: "block text-sm font-medium text-gray-700" %>
-        <%= form.collection_select :client_id, Client.where(deposant: true), :id, :nom, { prompt: "Sélectionner un client" }, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
-      </div>
+  <script>
+    function genererCodeBarre() {
+      document.getElementById("produit_code_barre").value = Math.floor(Math.random() * 10000) + 1;
+    }
+  </script>
 
-      <!-- Date de dépôt -->
-      <div class="mt-4">
-        <%= form.label :date_depot, "Date de dépôt", class: "block text-sm font-medium text-gray-700" %>
-        <%= form.date_field :date_depot, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
-      </div>
+  <!-- Impression code-barre -->
+  <div class="mt-4 flex items-center">
+    <%= form.check_box :impression_code_barre, { class: "h-5 w-5 text-blue-600 border-gray-300 rounded", id: "produit_impression_code_barre" }, true, false %>
+    <%= form.label :impression_code_barre, "Imprimer code-barre ?", class: "ml-2 text-sm font-medium text-gray-700" %>
+  </div>
 
-      <!-- Prix du déposant -->
-      <div class="mt-4">
-        <%= form.label :prix_deposant, "Prix du déposant", class: "block text-sm font-medium text-gray-700" %>
-        <%= form.number_field :prix_deposant, step: 0.01, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
-      </div>
+  <!-- Boutons -->
+  <div class="flex justify-end space-x-4 mt-6">
+    <%= link_to "Annuler", produits_path, class: "px-4 py-2 bg-gray-300 text-gray-900 rounded-md hover:bg-gray-400" %>
+    <%= form.submit "Enregistrer", class: "px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700" %>
+  </div>
+<% end %>
 
-      <!-- Observation -->
-      <div class="mt-4">
-        <%= form.label :observation, "Observation (ex : légère trace d'usure)", class: "block text-sm font-medium text-gray-700" %>
-        <%= form.text_area :observation, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
-      </div>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+  const etatField = document.querySelector("#produit_etat")
+  const neufOccasionFields = document.querySelector("#neuf-occasion-fields")
+  const depotVenteFields = document.querySelector("#depot-vente-fields")
 
-      <!-- Statut vendu -->
-      <div class="mt-4">
-        <%= form.label :vendu, "Vendu ?", class: "block text-sm font-medium text-gray-700" %>
-        <%= form.check_box :vendu, class: "mt-1 h-5 w-5 text-blue-600 border-gray-300 rounded" %>
-      </div>
-    
+  const stockInput = document.querySelector("#produit_stock")
+  const dateDepotInput = document.querySelector("#produit_date_depot")
+  const prixDeposantInput = document.querySelector("#produit_prix_deposant")
+  const prixVenteInput = document.querySelector("#produit_prix")
+  const imprimCodeBarreCheckbox = document.querySelector("#produit_impression_code_barre")
 
-      <!-- Boutons -->
-      <div class="flex justify-end space-x-4 mt-6">
-        <%= link_to "Annuler", produits_path, class: "px-4 py-2 bg-gray-300 text-gray-900 rounded-md hover:bg-gray-400" %>
-        <%= form.submit "Enregistrer", class: "px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700" %>
-      </div>
+  function toggleFields() {
+    const selectedEtat = etatField.value
 
-  
-  <% end %>
+    if (selectedEtat === "depot_vente") {
+      depotVenteFields.classList.remove("hidden")
+      neufOccasionFields.classList.add("hidden")
+
+      // Valeurs par défaut
+      if (stockInput) stockInput.value = 1
+
+      if (dateDepotInput && !dateDepotInput.value) {
+        const today = new Date().toISOString().split("T")[0]
+        dateDepotInput.value = today
+      }
+
+      if (imprimCodeBarreCheckbox) imprimCodeBarreCheckbox.checked = true
+
+      // Prix auto dès qu’on saisit prix déposant
+      if (prixDeposantInput && prixVenteInput) {
+        prixDeposantInput.addEventListener("input", function () {
+          const val = parseFloat(this.value)
+          if (!isNaN(val)) prixVenteInput.value = (val * 2 - 1).toFixed(2)
+        })
+      }
+    } else {
+      neufOccasionFields.classList.remove("hidden")
+      depotVenteFields.classList.add("hidden")
+
+      // Ne pas forcer les champs si pas dépôt
+      if (stockInput && stockInput.value == 1) stockInput.value = ""
+    }
+  }
+
+  // Initialiser à l’ouverture
+  toggleFields()
+
+  // Changement en direct
+  etatField.addEventListener("change", toggleFields)
+});
+
+</script>

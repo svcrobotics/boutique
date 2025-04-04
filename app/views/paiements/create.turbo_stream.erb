@@ -1,0 +1,5 @@
+<turbo-stream target="paiements_en_attente" action="replace">
+  <template>
+    <%= render partial: "paiements/paiements_en_attente", formats: [:html], locals: { paiements_en_attente: @paiements_en_attente } %>
+  </template>
+</turbo-stream>

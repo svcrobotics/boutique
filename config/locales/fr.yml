@@ -1,0 +1,90 @@
+fr:
+  activerecord:
+    errors:
+      models:
+        client:
+          attributes:
+            email:
+              taken: "Cet email est déjà utilisé"
+            telephone:
+              taken: "Ce numéro de téléphone est déjà utilisé"
+              blank: "Le téléphone est obligatoire"
+            nom:
+              blank: "Le nom est obligatoire"
+            prenom:
+              blank: "Le prénom est obligatoire"
+        fournisseur:
+          attributes:
+            nom:
+              blank: "Le nom est obligatoire"
+            email:
+              taken: "Cet email est déjà utilisé"
+        produit:
+          attributes:
+            nom:
+              blank: "Le nom est obligatoire"
+            description:
+              blank: "La description est obligatoire"
+            prix:
+              blank: "Le prix est obligatoire"
+              not_a_number: "Le prix doit être un nombre"
+              greater_than_or_equal_to: "Le prix doit être supérieur ou égal à 0"
+            prix_achat:
+              not_a_number: "Le prix d'achat doit être un nombre"
+              greater_than_or_equal_to: "Le prix d'achat doit être supérieur ou égal à 0"
+            prix_deposant:
+              not_a_number: "Le prix du déposant doit être un nombre"
+              greater_than_or_equal_to: "Le prix du déposant doit être supérieur ou égal à 0"
+            stock:
+              not_a_number: "Le stock doit être un nombre entier"
+              greater_than_or_equal_to: "Le stock doit être supérieur ou égal à 0"
+            categorie:
+              inclusion: "La catégorie sélectionnée n'est pas valide"
+            etat:
+              blank: "L'état du produit est obligatoire"
+              inclusion: "L'état sélectionné n'est pas valide"
+            code_barre:
+              taken: "Ce code-barre est déjà utilisé"
+            fournisseur_id:
+              blank: "Le fournisseur est obligatoire pour un produit neuf ou d'occasion"
+            client_id:
+              blank: "Le client déposant est obligatoire pour un produit en dépôt-vente"
+            date_achat:
+              blank: "La date d'achat est obligatoire pour un produit neuf ou d'occasion"
+            date_depot:
+              blank: "La date de dépôt est obligatoire pour un produit en dépôt-vente"
+            observation:
+              blank: "Une observation est requise pour un produit en dépôt-vente"
+
+  errors:
+    messages:
+      record_invalid: "Échec de la validation : %{errors}"
+      taken: "est déjà pris"
+      blank: "ne peut pas être vide"
+      not_a_number: "doit être un nombre"
+      greater_than_or_equal_to: "doit être supérieur ou égal à %{count}"
+      inclusion: "doit être sélectionné parmi les options valides"
+
+  date:
+    day_names: [dimanche, lundi, mardi, mercredi, jeudi, vendredi, samedi]
+    abbr_day_names: [dim, lun, mar, mer, jeu, ven, sam]
+    month_names: [~, janvier, février, mars, avril, mai, juin, juillet, août, septembre, octobre, novembre, décembre]
+    abbr_month_names: [~, janv., févr., mars, avr., mai, juin, juil., août, sept., oct., nov., déc.]
+    formats:
+      default: "%d/%m/%Y"
+      short: "%d/%m"
+      long: "%A %d %B %Y"
+
+  time:
+    formats:
+      default: "%A %d %B %Y à %H:%M"
+      short: "%d/%m %H:%M"
+      long: "%A %d %B %Y à %H:%M"
+
+  number:
+    currency:
+      format:
+        unit: "€"
+        format: "%n %u"
+        separator: ","
+        delimiter: " "

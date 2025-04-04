@@ -2,27 +2,71 @@
 
 <h1 class="text-3xl font-bold text-center my-6">Liste des clients</h1>
 
-<div class="flex justify-end mb-4">
-  <%= link_to "Nouveau client", new_client_path, 
-              data: { turbo_frame: dom_id(Client.new) }, 
-              class: "bg-blue-500 text-white px-4 py-2 rounded-md" %>
+<!-- 🚀 Moteur de recherche -->
+<div class="mb-4">
+  <%= form_with url: clients_path, method: :get, class: "flex space-x-2" do |form| %>
+    <%= form.text_field :query, value: params[:query], placeholder: "Rechercher par Nom, Prénom, Téléphone ou Ancien ID...", class: "w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
+    <%= form.submit "Rechercher", class: "px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700" %>
+  <% end %>
 </div>
 
-<%= turbo_frame_tag dom_id(Client.new) do %>
-  <!-- Le formulaire de création sera chargé ici -->
+<!-- 🚀 Affichage du message de recherche -->
+<% if params[:query].present? %>
+  <p class="text-gray-600 mb-4">Résultats pour "<strong><%= params[:query] %></strong>" :</p>
 <% end %>
 
-<table class="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
-  <thead class="bg-gray-100 text-gray-700">
-    <tr>
-      <th class="px-4 py-2 text-left">Nom</th>
-      <th class="px-4 py-2 text-left">Email</th>
-      <th class="px-4 py-2 text-left">Téléphone</th>
-      <th class="px-4 py-2 text-left">Déposant</th>
-      <th class="px-4 py-2 text-left">Actions</th>
-    </tr>
-  </thead>
-  <tbody id="clients">
-    <%= render @clients %>
-  </tbody>
-</table>
+  <table class="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
+    <thead class="bg-gray-100 text-gray-700">
+      <tr>
+        <th class="px-4 py-2 text-left">ID</th>
+        <th class="px-4 py-2 text-left">Nom</th>
+        <th class="px-4 py-2 text-left">Prénom</th>
+        <th class="px-4 py-2 text-left">Déposant</th>
+        <th class="px-4 py-2 text-left">Ancien ID</th>
+        <th class="px-4 py-2 text-left">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if @clients.any? %>
+        <% @clients.each do |client| %>
+          <tr class="border-b">
+            <td class="px-4 py-2"><%= client.id %></td>
+            <td class="px-4 py-2"><%= client.nom %></td>
+            <td class="px-4 py-2"><%= client.prenom %></td>
+            <td class="px-4 py-2"><%= client.deposant ? "Oui" : "Non" %></td>
+            <td class="px-4 py-2"><%= client.ancien_id.presence || "—" %></td>
+            <td class="px-4 py-2 flex space-x-2">
+            <%= button_to "Voir", client_path(client), 
+                          method: :get, 
+                          class: "px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700" %>
+
+            <%= button_to "Modifier", edit_client_path(client), 
+                          method: :get, 
+                          class: "px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600" %>
+
+            <%= button_to "Supprimer", client_path(client), 
+                          method: :delete, 
+                          onclick: "return confirm('Êtes-vous sûr de vouloir supprimer ce client ?')",
+                          class: "px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700" %>
+          </td>
+          </tr>
+        <% end %>
+    <% else %>
+      <tr>
+        <td colspan="7" class="text-center p-4 text-gray-500">Aucun client enregistré.</td>
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
+
+
+  <!-- 🚀 Pagination -->
+  <% if @pagy.present? %>
+    <div class="mt-6 flex justify-center">
+      <%= pagy_tailwind_nav(@pagy) %>
+    </div>
+  <% end %>
+
+<div class="flex justify-end mt-4">
+  <%= link_to "Nouveau client", new_client_path, class: "bg-blue-500 text-white px-4 py-2 rounded-md" %>
+</div>

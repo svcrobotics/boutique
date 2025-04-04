@@ -1,0 +1,2 @@
+class Cloture < ApplicationRecord
+end

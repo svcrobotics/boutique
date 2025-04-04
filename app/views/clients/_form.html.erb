@@ -1,45 +1,74 @@
-<%= form_with(model: client, class: "contents") do |form| %>
-  <% if client.errors.any? %>
-    <div id="error_explanation" class="bg-red-50 text-red-500 px-3 py-2 font-medium rounded-md mt-3">
-      <h2><%= pluralize(client.errors.count, "error") %> prohibited this client from being saved:</h2>
-
-      <ul class="list-disc ml-6">
-        <% client.errors.each do |error| %>
-          <li><%= error.full_message %></li>
-        <% end %>
-      </ul>
-    </div>
-  <% end %>
-
-  <div class="my-5">
-    <%= form.label :nom %>
-    <%= form.text_field :nom, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": client.errors[:nom].none?, "border-red-400 focus:outline-red-600": client.errors[:nom].any?}] %>
-  </div>
-
-  <div class="my-5">
-    <%= form.label :email %>
-    <%= form.text_field :email, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": client.errors[:email].none?, "border-red-400 focus:outline-red-600": client.errors[:email].any?}] %>
-  </div>
-
-  <div class="my-5">
-    <%= form.label :telephone %>
-    <%= form.text_field :telephone, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": client.errors[:telephone].none?, "border-red-400 focus:outline-red-600": client.errors[:telephone].any?}] %>
-  </div>
-
-  <div class="my-5">
-    <%= form.label :deposant, "Ce client est un déposant ?" %>
-    <div class="mt-1 flex items-center space-x-2">
-      <%= form.check_box :deposant, class: "h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500" %>
-    </div>
-  </div>
-
-  <!-- Ancien ID (Champ simple toujours visible) -->
-  <div class="my-5">
-    <%= form.label :ancien_id, "Ancien ID" %>
-    <%= form.text_field :ancien_id, class: "block shadow-sm rounded-md border px-3 py-2 mt-2 w-full border-gray-400 focus:outline-blue-600" %>
-  </div>
-
-  <div class="inline">
-    <%= form.submit class: "rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white inline-block font-medium cursor-pointer" %>
+<% if @client.errors.any? %>
+  <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+    <strong>Attention !</strong> Il y a <%= @client.errors.count %> erreur(s) :
+    <ul class="mt-2">
+      <% @client.errors.full_messages.each do |message| %>
+        <li class="ml-4">• <%= message %></li>
+      <% end %>
+    </ul>
   </div>
 <% end %>
+
+
+<h1 class="text-2xl font-bold text-center my-6">
+  <%= @client.new_record? ? "Créer un Client" : "Modifier le Client" %>
+</h1>
+
+<%= form_with(model: @client, local: true) do |form| %>
+  <!-- Nom -->
+  <div class="mb-4">
+    <%= form.label :nom, "Nom", class: "block text-sm font-medium text-gray-700" %>
+    <%= form.text_field :nom, class: "w-full p-2 border rounded", required: true %>
+  </div>
+
+  <!-- Prénom -->
+  <div class="mb-4">
+    <%= form.label :prenom, "Prénom", class: "block text-sm font-medium text-gray-700" %>
+    <%= form.text_field :prenom, class: "w-full p-2 border rounded" %>
+  </div>
+
+  <!-- Email -->
+  <div class="mb-4">
+    <%= form.label :email, "Email", class: "block text-sm font-medium text-gray-700" %>
+    <%= form.email_field :email, class: "w-full p-2 border rounded" %>
+  </div>
+
+  <!-- Téléphone -->
+  <div class="mb-4">
+    <%= form.label :telephone, "Téléphone", class: "block text-sm font-medium text-gray-700" %>
+    <%= form.text_field :telephone, class: "w-full p-2 border rounded" %>
+  </div>
+
+  <!-- Déposant -->
+  <div class="mb-4 flex items-center">
+    <%= form.check_box :deposant, class: "mr-2 h-5 w-5 text-blue-600 border-gray-300 rounded" %>
+    <%= form.label :deposant, "Ce client est un déposant ?", class: "text-sm font-medium text-gray-700" %>
+  </div>
+
+  <!-- Ancien ID (Apparaît uniquement si "Déposant" est coché) -->
+  <div class="mb-4" id="ancien_id_field" style="<%= @client.deposant? ? '' : 'display:none;' %>">
+    <%= form.label :ancien_id, "Ancien ID (optionnel)", class: "block text-sm font-medium text-gray-700" %>
+    <%= form.text_field :ancien_id, class: "w-full p-2 border rounded" %>
+  </div>
+
+  <!-- Boutons -->
+  <div class="mt-4 flex space-x-2">
+    <%= link_to "Annuler", clients_path, class: "px-4 py-2 bg-gray-300 rounded hover:bg-gray-400" %>
+    <%= form.submit "Enregistrer", class: "px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" %>
+  </div>
+<% end %>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    var deposantCheckbox = document.querySelector("#client_deposant");
+    var ancienIdField = document.querySelector("#ancien_id_field");
+
+    deposantCheckbox.addEventListener("change", function() {
+      if (this.checked) {
+        ancienIdField.style.display = "block";
+      } else {
+        ancienIdField.style.display = "none";
+      }
+    });
+  });
+</script>

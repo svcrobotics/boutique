@@ -1,0 +1,62 @@
+# Récupérer le fournisseur existant
+lacomy = Fournisseur.find_by(nom: "Lacomy")
+
+unless lacomy
+  puts "❌ Le fournisseur 'Lacomy' n'existe pas dans la base. Ajoutez-le d'abord."
+  exit
+end
+
+begin
+  date = Date.parse("2025-03-14")
+rescue ArgumentError
+  date = nil
+end
+
+# Liste complète des produits à ajouter
+produits = [
+  { code_fournisseur: "0854", nom: "TOP", prix_achat: 5.8, stock: 10 },
+  { code_fournisseur: "219824", nom: "Robe", prix_achat: 24, stock: 3 },
+  { code_fournisseur: "PULL37", nom: "Pull", prix_achat: 12, stock: 16 },
+  { code_fournisseur: "514727", nom: "Veste", prix_achat: 15.5, stock: 6 },
+  { code_fournisseur: "CHEMISE1", nom: "Chemise", prix_achat: 12, stock: 6 },
+  { code_fournisseur: "3336", nom: "TOP", prix_achat: 8, stock: 1 },
+  { code_fournisseur: "5844", nom: "Gilet", prix_achat: 15, stock: 5 },
+  { code_fournisseur: "17720", nom: "Top", prix_achat: 8.8, stock: 18 },
+  { code_fournisseur: "1074", nom: "Top", prix_achat: 7.5, stock: 12 },
+  { code_fournisseur: "GILET13-7418", nom: "Gilet", prix_achat: 13, stock: 5 },
+  { code_fournisseur: "814180", nom: "Pantalon", prix_achat: 11, stock: 4 },
+  { code_fournisseur: "PULL26", nom: "Pull", prix_achat: 14, stock: 7 },
+  { code_fournisseur: "PANTALON11", nom: "Pantalon", prix_achat: 11, stock: 4 }
+]
+
+produits.each do |prod|
+  # Vérifier si le produit existe déjà avec le même `code_fournisseur`
+  existing_product = Produit.find_by(code_fournisseur: prod[:code_fournisseur])
+
+  if existing_product
+    puts "⚠️ Produit '#{prod[:nom]}' (Code: #{prod[:code_fournisseur]}) existe déjà, il ne sera pas ajouté."
+  else
+    produit = Produit.new(
+      code_fournisseur: prod[:code_fournisseur],
+      nom: prod[:nom],
+      prix_achat: prod[:prix_achat],
+      stock: prod[:stock],
+      fournisseur: lacomy,
+      etat: "neuf",
+      categorie: "vêtement",
+      impression_code_barre: true, # Ajout de la valeur par défaut
+      date_achat: date
+    )
+
+    if produit.valid?
+      produit.save!
+      puts "✅ Produit '#{produit.nom}' ajouté avec succès."
+    else
+      puts "❌ ERREUR: Impossible d'ajouter '#{produit.nom}'"
+      puts "Problèmes détectés :"
+      puts produit.errors.full_messages.join("\n")
+    end
+  end
+end
+
+puts "🎉 Seed terminé !"

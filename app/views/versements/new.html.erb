@@ -1,0 +1,38 @@
+<!-- app/views/versements/new.html.erb -->
+<h1 class="text-2xl font-bold mb-6">💸 Nouveau versement à <%= @client.prenom %> <%= @client.nom %></h1>
+
+<% if @produits.any? %>
+  <table class="table-auto w-full border mb-6">
+    <thead>
+      <tr class="bg-gray-100">
+        <th class="px-4 py-2">Produit</th>
+        <th class="px-4 py-2">Date vente</th>
+        <th class="px-4 py-2">Prix déposant</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @produits.each do |produit| %>
+        <tr class="border-t">
+          <td class="px-4 py-2"><%= produit.nom %></td>
+          <td class="px-4 py-2">
+            <%= produit.ventes.last&.date_vente&.strftime("%d/%m/%Y") || "Non trouvé" %>
+          </td>
+          <td class="px-4 py-2 text-right">
+            <%= number_to_currency(produit.prix_deposant) %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <p class="text-lg font-semibold">Total à verser : <%= number_to_currency(@total) %> en espèces.</p>
+
+  <%= button_to "💰 Confirmer le versement", client_versements_path(@client), method: :post,
+    class: "mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700" %>
+
+
+<% else %>
+  <p class="text-red-600">Aucun produit en attente de versement.</p>
+<% end %>
+
+<%= link_to "↩ Retour", client_path(@client), class: "inline-block mt-4 text-blue-600 hover:underline" %>

@@ -7,41 +7,79 @@ class FournisseursTest < ApplicationSystemTestCase
 
   test "visiting the index" do
     visit fournisseurs_url
-    assert_selector "h1", text: "Fournisseurs"
+    assert_selector "h1", text: "Liste des Fournisseurs"
+    assert_text @fournisseur.nom
   end
 
-  test "should create fournisseur" do
+  test "creating a Fournisseur with Turbo" do
     visit fournisseurs_url
-    click_on "New fournisseur"
+    click_on "Nouveau Fournisseur"
 
-    fill_in "Adresse", with: @fournisseur.adresse
-    fill_in "Email", with: @fournisseur.email
-    fill_in "Nom", with: @fournisseur.nom
-    fill_in "Telephone", with: @fournisseur.telephone
-    click_on "Create Fournisseur"
+    within "#new_fournisseur" do
+      fill_in "Nom", with: "Turbo Fournisseur"
+      fill_in "Email", with: "turbo@example.com"
+      fill_in "Téléphone", with: "0123456789"
+      fill_in "Adresse", with: "Rue Turbo 123"
+      select "Société (Neuf)", from: "Type de fournisseur"
+      click_on "Ajouter"
+    end
 
-    assert_text "Fournisseur was successfully created"
-    click_on "Back"
+    assert_text "Turbo Fournisseur"
+    assert_text "Fournisseur créé"
   end
 
-  test "should update Fournisseur" do
-    visit fournisseur_url(@fournisseur)
-    click_on "Edit this fournisseur", match: :first
+  test "updating a Fournisseur with Turbo Frame" do
+    visit fournisseurs_url
 
-    fill_in "Adresse", with: @fournisseur.adresse
-    fill_in "Email", with: @fournisseur.email
-    fill_in "Nom", with: @fournisseur.nom
-    fill_in "Telephone", with: @fournisseur.telephone
-    click_on "Update Fournisseur"
+    within "tr##{dom_id(@fournisseur)}" do
+      click_on "Modifier"
+    end
 
-    assert_text "Fournisseur was successfully updated"
-    click_on "Back"
+    within "##{dom_id(@fournisseur, :edit)}" do
+      fill_in "Nom", with: "Updated Fournisseur"
+      click_on "Enregistrer"
+    end
+
+    assert_text "Updated Fournisseur"
+    assert_text "Fournisseur mis à jour"
   end
 
-  test "should destroy Fournisseur" do
-    visit fournisseur_url(@fournisseur)
-    click_on "Destroy this fournisseur", match: :first
+  test "showing fournisseur details with Turbo Frame" do
+    visit fournisseurs_url
 
-    assert_text "Fournisseur was successfully destroyed"
+    within "tr##{dom_id(@fournisseur)}" do
+      click_on "Voir"
+    end
+
+    within "#fournisseur_details" do
+      assert_text @fournisseur.nom
+      assert_text @fournisseur.email
+      assert_text @fournisseur.telephone
+    end
+  end
+
+  test "destroying a Fournisseur with Turbo Stream" do
+    visit fournisseurs_url
+
+    within "tr##{dom_id(@fournisseur)}" do
+      accept_confirm do
+        click_on "Supprimer"
+      end
+    end
+
+    assert_no_text @fournisseur.nom
+    assert_text "Fournisseur supprimé"
+  end
+
+  test "errors when creating invalid Fournisseur" do
+    visit fournisseurs_url
+    click_on "Nouveau Fournisseur"
+
+    within "#new_fournisseur" do
+      fill_in "Nom", with: ""
+      click_on "Ajouter"
+      assert_text "Impossible d'enregistrer le fournisseur"
+      assert_text "Nom doit être rempli"
+    end
   end
 end

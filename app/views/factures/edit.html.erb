@@ -1,0 +1,67 @@
+<h1 class="text-2xl font-bold text-center my-6">Modifier la Facture</h1>
+
+<div class="max-w-3xl mx-auto bg-white shadow-md rounded-lg p-6">
+
+  <!-- 🚨 Affichage des erreurs -->
+  <% if @facture.errors.any? %>
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+      <strong>Attention !</strong> Il y a <%= @facture.errors.count %> erreur(s) :
+      <ul class="mt-2">
+        <% @facture.errors.full_messages.each do |message| %>
+          <li class="ml-4">• <%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <%= form_with(model: @facture, local: true) do |form| %>
+
+    <!-- 🏢 Fournisseur -->
+    <div class="mb-4">
+      <%= form.label :fournisseur_id, "Fournisseur", class: "block text-sm font-medium text-gray-700" %>
+      <%= form.collection_select :fournisseur_id, Fournisseur.all, :id, :nom, { prompt: "Sélectionner un fournisseur" }, class: "w-full p-2 border border-gray-300 rounded-md" %>
+    </div>
+
+    <!-- 🔢 Numéro de facture -->
+    <div class="mb-4">
+      <%= form.label :numero, "Numéro de facture", class: "block text-sm font-medium text-gray-700" %>
+      <%= form.text_field :numero, class: "w-full p-2 border border-gray-300 rounded-md" %>
+    </div>
+
+    <!-- 📅 Date de la facture -->
+    <div class="mb-4">
+      <%= form.label :date, "Date de facture", class: "block text-sm font-medium text-gray-700" %>
+      <%= form.date_field :date, class: "w-full p-2 border border-gray-300 rounded-md" %>
+    </div>
+
+    <!-- 💰 Montant de la facture -->
+    <div class="mb-4">
+      <%= form.label :montant, "Montant (€)", class: "block text-sm font-medium text-gray-700" %>
+      <%= form.number_field :montant, step: 0.01, class: "w-full p-2 border border-gray-300 rounded-md" %>
+    </div>
+
+    <!-- 📂 Modifier / Ajouter un fichier PDF -->
+    <div class="mb-4">
+      <%= form.label :fichier, "Télécharger un nouveau fichier (PDF)", class: "block text-sm font-medium text-gray-700" %>
+      <%= form.file_field :fichier, multiple: true, class: "w-full p-2 border border-gray-300 rounded-md" %>
+
+      <% if @facture.fichier.attached? %>
+        <div class="mt-2">
+          <p class="text-gray-600">Fichiers actuels :</p>
+          <% @facture.fichier.each do |fichier| %>
+            <p>
+              <%= link_to "Voir", url_for(fichier), target: "_blank", class: "text-blue-500 hover:underline" %>
+            </p>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- 🔄 Boutons -->
+    <div class="flex justify-end space-x-4 mt-6">
+      <%= link_to "Annuler", factures_path, class: "px-4 py-2 bg-gray-300 text-gray-900 rounded-md hover:bg-gray-400" %>
+      <%= form.submit "Enregistrer", class: "px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700" %>
+    </div>
+
+  <% end %>
+</div>

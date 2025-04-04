@@ -1,15 +1,103 @@
-<turbo-frame id="client_details_<%= @client.id %>">
-  <div class="p-4 border-t">
-    <h2 class="text-xl font-bold mb-2">Détails du client</h2>
-    <p><strong>Nom :</strong> <%= @client.nom %></p>
-    <p><strong>Email :</strong> <%= @client.email %></p>
-    <p><strong>Téléphone :</strong> <%= @client.telephone %></p>
-    <p><strong>Déposant :</strong> <%= @client.deposant? ? "Oui" : "Non" %></p>
-    <p><strong>Ancien ID :</strong> <%= @client.ancien_id %></p>
-    
-    <!-- Vous pouvez ajouter ici un lien pour fermer ou remplacer le contenu -->
-    <%= link_to "Fermer", "#", 
-                data: { turbo_frame: "client_details_#{@client.id}", turbo_action: "replace" }, 
-                class: "text-blue-500 hover:underline" %>
+<div class="p-6 space-y-10">
+  <h2 class="text-3xl font-bold">🧾 Fiche client</h2>
+
+  <!-- Carte Détails du client -->
+  <div class="bg-white rounded-2xl shadow p-6 border border-gray-200 space-y-2">
+    <h3 class="text-xl font-semibold text-gray-700 mb-4">👤 Informations générales</h3>
+    <p><span class="font-medium">Nom :</span> <%= @client.nom %></p>
+    <p><span class="font-medium">Prénom :</span> <%= @client.prenom %></p>
+    <p><span class="font-medium">Email :</span> <%= @client.email.presence || "—" %></p>
+    <p><span class="font-medium">Téléphone :</span> <%= @client.telephone.presence || "—" %></p>
+    <p><span class="font-medium">Ancien ID :</span> <%= @client.ancien_id %></p>
+
+    <div class="mt-4">
+      <%= link_to "✏️ Modifier", edit_client_path(@client),
+        class: "inline-block px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600" %>
+    </div>
   </div>
-</turbo-frame>
+  <br>
+  <% if @client.deposant? %>
+    <!-- PDF -->
+    <div>
+      <%= link_to "📄 Générer le PDF pour la déposante", generate_pdf_client_path(@client), target: "_blank",
+        class: "inline-block px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-800" %>
+    </div>
+  <br>
+    <!-- Produits déposés -->
+    <div class="space-y-4">
+      <h3 class="text-2xl font-semibold">👜 Produits déposés</h3>
+      <% produits_deposes = @client.produits.where(en_depot: true) %>
+      <% if produits_deposes.any? %>
+        <div class="overflow-x-auto rounded-lg shadow border border-gray-200">
+          <table class="min-w-full table-auto text-sm">
+            <thead class="bg-gray-100">
+              <tr>
+                <th class="px-4 py-3 text-left">Nom</th>
+                <th class="px-4 py-3 text-left">Catégorie</th>
+                <th class="px-4 py-3 text-right">Prix demandé</th>
+                <th class="px-4 py-3 text-left">Statut</th>
+                <th class="px-4 py-3 text-left">Date de dépôt</th>
+                <th class="px-4 py-3 text-left">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% produits_deposes.each do |produit| %>
+                <tr class="border-t hover:bg-gray-50">
+                  <td class="px-4 py-2"><%= link_to produit.nom, produit_path(produit), class: "text-blue-600 hover:underline" %></td>
+                  <td class="px-4 py-2"><%= produit.categorie %></td>
+                  <td class="px-4 py-2 text-right"><%= number_to_currency(produit.prix_deposant) %></td>
+                  <td class="px-4 py-2"><%= produit.ventes.any? ? "✔️ Vendu" : "❌ Non vendu" %></td>
+                  <td class="px-4 py-2"><%= produit.date_depot&.strftime("%d/%m/%Y") %></td>
+                  <td class="px-4 py-2">
+                    <%= link_to "Modifier", edit_produit_path(produit), class: "text-yellow-600 hover:underline" %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <p class="italic text-green-700">✅ Aucun produit déposé.</p>
+      <% end %>
+    </div>
+  <br>
+    <!-- Versements effectués -->
+    <h3 class="text-xl font-semibold mb-2 mt-6">💸 Versements effectués</h3>
+    <% versements = @client.versements.order(created_at: :desc) %>
+    <% if versements.any? %>
+      <table class="table-auto w-full border mb-6">
+        <thead>
+          <tr class="bg-gray-100">
+            <th class="px-4 py-2">Reçu</th>
+            <th class="px-4 py-2">Montant</th>
+            <th class="px-4 py-2">Date</th>
+            <th class="px-4 py-2">Méthode</th>
+            <th class="px-4 py-2">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% versements.each do |versement| %>
+            <tr class="border-t">
+              <td class="px-4 py-2 font-mono"><%= versement.numero_recu %></td>
+              <td class="px-4 py-2 text-right"><%= number_to_currency(versement.montant) %></td>
+              <td class="px-4 py-2"><%= versement.created_at.strftime("%d/%m/%Y") %></td>
+              <td class="px-4 py-2"><%= versement.methode_paiement %></td>
+              <td class="px-4 py-2">
+                <%= link_to "🖨️ Imprimer", imprimer_versement_path(versement), method: :get, class: "text-blue-600 hover:underline" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p class="italic text-green-700">✅ Aucun versement effectué pour cette déposante.</p>
+    <% end %>
+
+  <% end %>
+  <br>
+  <h3 class="text-2xl font-semibold">💼 Versements à venir</h3>
+  <!-- Paiements en attente (partiel) -->
+  <turbo-frame id="paiements_en_attente">
+    <%= render partial: 'paiements/paiements_en_attente', locals: { paiements_en_attente: @paiements_en_attente } %>
+  </turbo-frame>
+</div>

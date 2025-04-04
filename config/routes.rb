@@ -1,16 +1,52 @@
 Rails.application.routes.draw do
+  root "pages#home"
   resources :fournisseurs
-  resources :ventes
-  resources :clients, only: [ :index, :show, :new, :create, :edit, :update, :destroy ]
+  resources :factures
 
-  resources :clients do
+  resources :paiements do
     member do
-      get :cancel_edit
+      post :lier_aux_ventes
+      get :imprimer
     end
   end
 
-  resources :produits
-  root "pages#home"
+  resources :clients do
+    resources :paiements, only: [ :index, :new, :create ]
+    member do
+      get :generate_pdf
+    end
+  end
+  resources :produits do
+    post :generate_label, on: :member  # Pour une seule étiquette
+    post :generate_multiple_labels, on: :collection  # Pour toutes les étiquettes
+  end
+
+  get "ventes/export", to: "ventes#export_ventes", as: :export_ventes
+  get "ventes/export_interface", to: "ventes#index", as: :export_interface_ventes
+
+  resources :ventes do
+    post :recherche_produit, on: :collection
+    post :retirer_produit, on: :collection
+    post :modifier_quantite, on: :collection
+    get :imprimer_ticket, on: :member
+  end
+
+  resources :clients do
+    resources :versements, only: [ :new, :create ]
+  end
+
+  resources :versements, only: [ :index ] do
+    get :imprimer, on: :member
+  end
+
+  get "stats", to: "stats#index"
+
+  resources :clotures do
+    get :imprimer, on: :member
+    post :cloture_z, on: :collection
+    post :cloture_mensuelle, on: :collection
+  end
+
 
   # get "texte", to: "textes#show", as: :texte
 

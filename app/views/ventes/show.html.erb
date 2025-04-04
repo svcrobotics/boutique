@@ -1,17 +1,46 @@
-<% content_for :title, "Showing vente" %>
+<div class="max-w-4xl mx-auto bg-white shadow rounded p-6">
+  <h1 class="text-2xl font-bold mb-4">🧾 Détail de la vente n°<%= @vente.id %></h1>
+  <div class="mb-4 text-gray-700">
+    <p><strong>ID Vente :</strong> <%= @vente.id %></p>
+    <p><strong>Date :</strong> <%= l(@vente.date_vente || @vente.created_at, format: :long) %></p>
+    <p><strong>Cliente :</strong> <%= @vente.client&.nom || "Sans cliente" %></p>
+    <p><strong>Mode de paiement :</strong> <%= @vente.mode_paiement || "Non précisé" %></p>
+    <p><strong>Total :</strong> <%= number_to_currency(@vente.total) %></p>
+  </div>
 
-<div class="md:w-2/3 w-full">
-  <% if notice.present? %>
-    <p class="py-2 px-3 bg-green-50 mb-5 text-green-500 font-medium rounded-md inline-block" id="notice"><%= notice %></p>
-  <% end %>
 
-  <h1 class="font-bold text-4xl">Showing vente</h1>
 
-  <%= render @vente %>
+  <h2 class="text-xl font-semibold mt-6 mb-2">🛍 Produits vendus</h2>
+  <table class="w-full text-sm border-collapse">
+    <thead class="bg-gray-100 text-gray-700">
+      <tr>
+        <th class="text-left px-3 py-2">Produit ID</th>
+        <th class="text-left px-3 py-2">Nom</th>
+        <th class="text-left px-3 py-2">Code-barres</th>
+        <th class="text-right px-3 py-2">Quantité</th>
+        <th class="text-right px-3 py-2">Prix unitaire</th>
+        <th class="text-right px-3 py-2">Nom du déposant</th>
+        <th class="text-right px-3 py-2">Prix déposant</th>
+        <th class="text-right px-3 py-2">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @vente.ventes_produits.includes(:produit).each do |vp| %>
+        <tr class="border-b">
+          <td class="px-3 py-2"><%= vp.produit.id %></td>
+          <td class="px-3 py-2"><%= vp.produit.nom %></td>
+          <td class="px-3 py-2"><%= vp.produit.code_barre %></td>
+          <td class="px-3 py-2 text-right"><%= vp.quantite %></td>
+          <td class="px-3 py-2 text-right"><%= number_to_currency(vp.prix_unitaire) %></td>
+          <td class="px-3 py-2"><%= vp.produit.client.present? ? "#{vp.produit.client.prenom} #{vp.produit.client.nom}" : "-" %></td>
+          <td class="px-3 py-2"><%= number_to_currency(vp.produit.prix_deposant) %></td>
+          <td class="px-3 py-2 text-right"><%= number_to_currency(vp.prix_unitaire * vp.quantite) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
 
-  <%= link_to "Edit this vente", edit_vente_path(@vente), class: "mt-2 rounded-md px-3.5 py-2.5 bg-gray-100 hover:bg-gray-50 inline-block font-medium" %>
-  <%= link_to "Back to ventes", ventes_path, class: "ml-2 rounded-md px-3.5 py-2.5 bg-gray-100 hover:bg-gray-50 inline-block font-medium" %>
-  <div class="inline-block ml-2">
-    <%= button_to "Destroy this vente", @vente, method: :delete, class: "mt-2 rounded-md px-3.5 py-2.5 text-white bg-red-600 hover:bg-red-500 font-medium cursor-pointer", data: { turbo_confirm: "Are you sure?" } %>
+  <div class="mt-6">
+    <%= link_to "← Retour à la liste", ventes_path, class: "text-blue-600 hover:underline" %>
   </div>
 </div>

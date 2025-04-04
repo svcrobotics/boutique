@@ -1,4 +1,0 @@
-<!-- app/views/clients/create.turbo_stream.erb -->
-
-<%= turbo_stream.prepend "clients", partial: "clients/client", locals: { client: @client } %>
-<%= turbo_stream.update Client.new, "" %>

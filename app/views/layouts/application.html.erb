@@ -2,28 +2,91 @@
 <html>
 <head>
   <title>Boutique</title>
-  <%= csrf_meta_tags %>
-  <%= csp_meta_tag %>
-  <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
-  <%= javascript_include_tag "application", "data-turbo-track": "reload", defer: true %>
-  <%= javascript_importmap_tags %>
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
 </head>
-<body class="bg-gray-100 text-gray-900">
+<script>
+  let input = "";
+  let lastScanTime = Date.now();
 
-  <nav class="bg-blue-600 text-white p-4">
+  document.addEventListener("keydown", function (e) {
+    const now = Date.now();
+    const isScanner = now - lastScanTime < 50; // Si moins de 50ms, on suppose que c’est un scan
+    lastScanTime = now;
+
+    if (!isScanner) {
+      input = "";
+    }
+
+    if (e.key === "Enter") {
+      if (input.length > 2) {
+        // Redirection avec le code-barres en paramètre
+        window.location.href = "/ventes/new?code_barre=" + encodeURIComponent(input);
+      }
+      input = "";
+    } else {
+      input += e.key;
+    }
+  });
+</script>
+
+<body class="bg-gray-100 text-gray-900">
+  <nav class="bg-blue-600 text-black p-4">
     <div class="container mx-auto flex justify-between items-center">
       <h1 class="text-xl font-bold">Boutique</h1>
-      <ul class="flex space-x-4">
-        <li><a href="<%= root_path %>" class="hover:underline">Accueil</a></li>
-        <li><a href="<%= clients_path %>" class="hover:underline">Clients</a></li>
-        <li><a href="<%= produits_path %>" class="hover:underline">Produits</a></li>
-        <li><a href="<%= ventes_path %>" class="hover:underline">Ventes</a></li>
-        <li><a href="<%= fournisseurs_path %>" class="hover:underline">Fournisseurs</a></li>
-      </ul>
+
+      <form id="menuForm" class="ml-4">
+        
+        <select id="menu" class="p-2 bg-gray-200 text-black rounded-md shadow-sm">
+          <option value="" selected disabled>📌 Sélectionner une section</option>
+          <option value="<%= root_path %>">🏠 Accueil</option>
+          <optgroup label="🛠 Gestion">
+            <option value="<%= fournisseurs_path %>">🏢 Fournisseurs</option>
+            <option value="<%= factures_path %>">📄 Factures</option>
+            <option value="<%= clients_path %>">👥 Clients</option>
+            <option value="<%= produits_path %>">📦 Produits</option>
+          </optgroup>
+          <optgroup label="💰 Caisse">
+            <option value="<%= ventes_path %>">🛒 Ventes</option>
+            <option value="<%= clotures_path %>">🔐 Clôtures</option>
+          </optgroup>
+          <optgroup label="💰 Comptable">
+            <option value="<%= export_interface_ventes_path %>">📦 Export Ventes</option>
+          </optgroup>
+          <optgroup label="💰 Statistique">
+            <option value="<%= stats_path %>">📄 Stats</option>
+          </optgroup>
+          <optgroup label="📦 Dépot-Vente">
+            <option value="<%= paiements_path %>">💰 Paiements</option>
+          </optgroup>
+        </select>
+      </form>
+
+      <script>
+        document.getElementById("menu").addEventListener("change", function() {
+          if (this.value) {
+            window.location.href = this.value;
+          }
+        });
+      </script>
+
     </div>
   </nav>
 
   <div class="max-w-7xl mx-auto p-6">
+    <% if flash[:notice].present? %>
+      <div class="bg-green-400 text-black p-4 text-center mb-4 rounded-md">
+        <%= flash[:notice] %>
+      </div>
+    <% end %>
+
+    <% if flash[:alert].present? %>
+      <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+        <%= flash[:alert] %>
+      </div>
+    <% end %>
     <%= yield %>
   </div>
 

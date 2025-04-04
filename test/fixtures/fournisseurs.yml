@@ -1,13 +1,8 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
 one:
-  nom: MyString
-  email: MyString
-  telephone: MyString
-  adresse: MyText
-
-two:
-  nom: MyString
-  email: MyString
-  telephone: MyString
-  adresse: MyText
+  nom: Fournisseur One
+  email: one@example.com
+  telephone: "0123456789"
+  adresse: "123 Rue Fixture"
+  type_fournisseur: "Société (Neuf)"

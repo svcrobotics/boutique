@@ -1,0 +1,41 @@
+<p class="mb-2">Nombre de ventes : <strong><%= @ventes_count %></strong></p>
+<p class="mb-2">Articles vendus : <strong><%= @articles_count %></strong></p>
+
+<p class="mt-4 font-semibold">Modes de paiement :</p>
+<ul class="list-disc ml-6">
+  <li>Espèces : <%= number_to_currency(@total_especes) %></li>
+  <li>Carte bancaire : <%= number_to_currency(@total_cb) %></li>
+  <li>Chèque : <%= number_to_currency(@total_cheque) %></li>
+</ul>
+
+<p class="mt-4 font-semibold">Résumé TVA :</p>
+<table class="table-auto w-full border mt-2">
+  <thead>
+    <tr class="bg-gray-100">
+      <th class="px-4 py-2">Taux</th>
+      <th class="px-4 py-2">HT</th>
+      <th class="px-4 py-2">TVA</th>
+      <th class="px-4 py-2">TTC</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="px-4 py-2">0%</td>
+      <td class="px-4 py-2 text-right"><%= number_to_currency(@ht_0) %></td>
+      <td class="px-4 py-2 text-right">0,00 €</td>
+      <td class="px-4 py-2 text-right"><%= number_to_currency(@ttc_0) %></td>
+    </tr>
+    <tr>
+      <td class="px-4 py-2">20%</td>
+      <td class="px-4 py-2 text-right"><%= number_to_currency(@ht_20) %></td>
+      <td class="px-4 py-2 text-right"><%= number_to_currency(@tva_20) %></td>
+      <td class="px-4 py-2 text-right"><%= number_to_currency(@ttc_20) %></td>
+    </tr>
+    <tr class="font-bold border-t">
+      <td class="px-4 py-2">TOTAL</td>
+      <td class="px-4 py-2 text-right"><%= number_to_currency(@ht_total) %></td>
+      <td class="px-4 py-2 text-right"><%= number_to_currency(@tva_total) %></td>
+      <td class="px-4 py-2 text-right"><%= number_to_currency(@ttc_total) %></td>
+    </tr>
+  </tbody>
+</table>

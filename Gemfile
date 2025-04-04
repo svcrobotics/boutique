@@ -51,6 +51,8 @@ group :development, :test do
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+
+  gem "factory_bot_rails"
 end
 
 group :development do
@@ -62,7 +64,39 @@ group :test do
   # Use system testing [https://guides.rubyonrails.org/testing.html#system-testing]
   gem "capybara"
   gem "selenium-webdriver"
+  gem "webdrivers"
 end
 
 gem "mini_magick"
 gem "image_processing"
+
+# gem "vite_rails", "~> 3.0"
+
+gem "pagy", "~> 9.3"
+
+gem "faker", "~> 3.5"
+
+gem "rspec-rails", "~> 7.1"
+
+# Pour générer des codes-barres
+gem "barby"
+gem "rqrcode"
+gem "chunky_png" # Nécessaire pour générer les images PNG des codes-barres
+
+# Pour les SMS
+gem "dotenv-rails"
+gem "twilio-ruby"
+
+# Pour la génération de pdf
+gem "prawn"
+gem "prawn-table"
+
+# Import fichier excel
+gem "roo"
+gem "csv"
+
+# Export fichier excel
+gem "caxlsx"
+gem "caxlsx_rails"
+
+gem "whenever", require: false

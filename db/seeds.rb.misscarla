@@ -1,0 +1,64 @@
+# Récupérer le fournisseur existant
+misscarla = Fournisseur.find_by(nom: "MissCarla")
+
+unless misscarla
+  puts "❌ Le fournisseur 'MissCarla' n'existe pas dans la base. Ajoutez-le d'abord."
+  exit
+end
+
+begin
+  date = Date.parse("2025-03-13")
+rescue ArgumentError
+  date = nil
+end
+
+# Liste complète des produits à ajouter
+produits = [
+  { code_fournisseur: "AC4", nom: "ACCESSOIRES", prix_achat: 4.9, stock: 2 },
+  { code_fournisseur: "AC35", nom: "ACCESSOIRES", prix_achat: 3.9, stock: 2 },
+  { code_fournisseur: "07125", nom: "JUPE", prix_achat: 14.9, stock: 2 },
+  { code_fournisseur: "01115", nom: "PANTALON", prix_achat: 13.9, stock: 3 },
+  { code_fournisseur: "0415", nom: "ROBE", prix_achat: 17.9, stock: 2 },
+  { code_fournisseur: "0509", nom: "TOP", prix_achat: 10.9, stock: 3 },
+  { code_fournisseur: "1311", nom: "PULL", prix_achat: 12.9, stock: 14 },
+  { code_fournisseur: "0114", nom: "Pantalon", prix_achat: 15.9, stock: 26 },
+  { code_fournisseur: "0715", nom: "Jupe", prix_achat: 17.9, stock: 3 },
+  { code_fournisseur: "0811", nom: "Veste", prix_achat: 12.9, stock: 16 },
+  { code_fournisseur: "0711", nom: "Jupe", prix_achat: 12.9, stock: 2 },
+  { code_fournisseur: "1314", nom: "Pull", prix_achat: 16.9, stock: 12 },
+  { code_fournisseur: "1378", nom: "Pull", prix_achat: 9.9, stock: 6 },
+  { code_fournisseur: "1313", nom: "Pull", prix_achat: 14.9, stock: 14 }
+]
+
+produits.each do |prod|
+  # Vérifier si le produit existe déjà avec le même `code_fournisseur`
+  existing_product = Produit.find_by(code_fournisseur: prod[:code_fournisseur])
+
+  if existing_product
+    puts "⚠️ Produit '#{prod[:nom]}' (Code: #{prod[:code_fournisseur]}) existe déjà, il ne sera pas ajouté."
+  else
+    produit = Produit.new(
+      code_fournisseur: prod[:code_fournisseur],
+      nom: prod[:nom],
+      prix_achat: prod[:prix_achat],
+      stock: prod[:stock],
+      fournisseur: misscarla,
+      etat: "neuf",
+      categorie: "vêtement",
+      prix: prod[:prix_achat] * 4,
+      impression_code_barre: true, # Ajout de la valeur par défaut
+      date_achat: date
+    )
+
+    if produit.valid?
+      produit.save!
+      puts "✅ Produit '#{produit.nom}' ajouté avec succès."
+    else
+      puts "❌ ERREUR: Impossible d'ajouter '#{produit.nom}'"
+      puts "Problèmes détectés :"
+      puts produit.errors.full_messages.join("\n")
+    end
+  end
+end
+
+puts "🎉 Seed terminé !"

@@ -1,24 +1,101 @@
-<%= turbo_frame_tag "first_turbo_frame" do %>
-    <%= link_to "Nouveau produit",
-      new_produit_path,
-      data: { turbo_frame: "second_frame" },
-      class: "bg-green-400 text-white px-4 py-2 rounded" %>
-<% end %>
+<% content_for :title, "Produits" %>
 
-<h1 class="text-3xl font-bold text-center my-6">Nos Produits</h1>
+<h1 class="text-3xl font-bold text-center my-6">Liste des produits</h1>
 
-<!-- Filtres par catégorie -->
-<div class="flex justify-center space-x-4 mb-6">
-  <%= link_to "Tous", produits_path, class: "px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400" %>
-  <%= link_to "Vêtement", produits_path(categorie: "vêtement"), class: "px-4 py-2 bg-blue-400 text-white rounded-md hover:bg-blue-600" %>
-  <%= link_to "Accessoire", produits_path(categorie: "accessoire"), class: "px-4 py-2 bg-blue-400 text-white rounded-md hover:bg-blue-600" %>
-  <%= link_to "Chaussure", produits_path(categorie: "chaussure"), class: "px-4 py-2 bg-blue-400 text-white rounded-md hover:bg-blue-600" %>
-  <%= link_to "Décoration", produits_path(categorie: "deco"), class: "px-4 py-2 bg-blue-400 text-white rounded-md hover:bg-blue-600" %>
-</div>
+<!-- 🔍 Formulaire de recherche avec filtres -->
+<div class="mb-4">
+  <%= form_with url: produits_path, method: :get, class: "flex space-x-2" do |form| %>
+    <!-- 🔍 Recherche par nom -->
+    <%= form.text_field :query, placeholder: "Rechercher un produit...", value: params[:query], class: "w-1/3 p-2 border border-gray-300 rounded-md shadow-sm" %>
 
-<!-- Grille des produits -->
-<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mx-auto max-w-7xl p-4">
-  <% @produits.each do |produit| %>
-    <%= render "produits/produit", produit: produit %>
+    <!-- 🔄 Filtre par état -->
+    <%= form.select :etat, [["Tous", ""], ["Neuf", "neuf"], ["Occasion", "occasion"], ["Dépôt-Vente", "depot_vente"]],
+                    { selected: params[:etat] }, class: "p-2 border border-gray-300 rounded-md shadow-sm" %>
+
+    <!-- ✅ Filtre par stock -->
+    <%= form.select :stock, [["Tous", ""], ["En stock", "disponible"], ["Rupture de stock", "rupture"]],
+                    { selected: params[:stock] }, class: "p-2 border border-gray-300 rounded-md shadow-sm" %>
+                    
+    <!-- 🔽 Filtre par catégorie -->
+    <%= form.select :categorie, [["Toutes", ""]] + Produit.distinct.pluck(:categorie).map { |c| [c.humanize, c] },
+                    { selected: params[:categorie] }, class: "p-2 border border-gray-300 rounded-md shadow-sm" %>
+
+    <%= form.submit "Filtrer", class: "px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700" %>
   <% end %>
 </div>
+<!-- ℹ️ Message d'information -->
+<div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4 rounded-md">
+  <p><strong>🔎 Recherche intelligente :</strong> Vous pouvez rechercher un produit par :</p>
+    <ul class="list-disc pl-5">
+      <li><strong>Nom du produit</strong> (ex : "Robe noire")</li>
+      <li><strong>Code fournisseur</strong> (ex : "AC4")</li>
+      <li><strong>Nom du fournisseur</strong> (ex : "MissCarla")</li>
+      <li><strong>Nom du client déposant</strong> (ex : "Dupont")</li>
+    </ul>
+</div>
+
+  <div class="flex justify-end mt-4">
+    <%= link_to "Nouveau produit", new_produit_path, class: "bg-blue-500 text-white px-4 py-2 rounded-md" %>
+    <%= button_to "Imprimer Étiquettes", generate_multiple_labels_produits_path, method: :post, class: "bg-yellow-500 text-white px-4 py-2 rounded-md" %>
+  </div>
+
+  <table class="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
+    <thead class="bg-gray-100 text-gray-700">
+      <tr>
+        <!--<th class="px-4 py-2 text-left">Fournisseur</th> -->
+        <!--<th class="px-4 py-2 text-left">Code</th>-->
+        <th class="px-4 py-2 text-left">Nom</th>
+        <!--<th class="px-4 py-2 text-left">Prix Achat</th>-->
+        <th class="px-4 py-2 text-left">Prix Vente</th>
+        <th class="px-4 py-2 text-left">Stock</th>
+        <!--<th class="px-4 py-2 text-left">Mise à jour</th>-->
+        <th class="px-4 py-2 text-left">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if @produits.any? %>
+        <% @produits.each do |produit| %>
+          <tr class="border-b">
+            <!--<td class="px-4 py-2"><%= produit.fournisseur&.nom %></td>-->
+            <!--<td class="px-4 py-2"><%= produit.code_fournisseur %></td>-->
+            <td class="px-4 py-2"><%= produit.nom %></td>
+            <!--<td class="px-4 py-2"><%= produit.prix_achat %></td>-->
+            <td class="px-4 py-2"><%= produit.prix %></td>
+            <td class="px-4 py-2"><%= produit.stock %></td>
+            <!--<td class="px-4 py-2"><%= produit.updated_at %></td>-->
+            <td class="px-4 py-2 flex space-x-2">
+              <%= button_to "Voir", produit_path(produit), 
+                          method: :get, 
+                          class: "px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700" %>
+
+              <%= button_to "Modifier", edit_produit_path(produit), 
+                          method: :get, 
+                          class: "px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600" %>
+
+              <%= button_to "Supprimer", produit_path(produit), 
+                          method: :delete, 
+                          onclick: "return confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')",
+                          class: "px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700" %>
+            
+              <%= button_to "Étiquette", generate_label_produit_path(produit), 
+                          method: :post, 
+                          class: "px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700" %>
+            
+            </td>
+          </tr>
+        <% end %>
+      <% else %>
+        <tr>
+          <td colspan="7" class="text-center p-4 text-gray-500">Aucun produit enregistré.</td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+
+<!-- 🚀 Pagination -->
+<% if @pagy.present? %>
+  <div class="mt-6 flex justify-center">
+    <%= pagy_tailwind_nav(@pagy) %>
+  </div>
+<% end %>

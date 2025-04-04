@@ -1,86 +1,78 @@
-<% content_for :title, "Showing produit" %>
+<h1 class="text-3xl font-bold text-center my-6">Détails du Produit</h1>
 
-<div class="md:w-2/3 w-full">
-  <% if notice.present? %>
-    <p class="py-2 px-3 bg-green-50 mb-5 text-green-500 font-medium rounded-md inline-block" id="notice"><%= notice %></p>
+<div class="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md">
+
+  <!-- 📌 Affichage de l'image principale -->
+  <div class="mb-4">
+    <% if @produit.images.attached? %>
+      <%= image_tag @produit.images.first, class: "w-full h-64 object-cover rounded-md" %>
+    <% else %>
+      <div class="w-full h-64 flex items-center justify-center bg-gray-200 rounded-md">
+        <span class="text-gray-500">Aucune image</span>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- 📌 Informations générales -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div>
+      <h2 class="text-xl font-semibold mb-2"><%= @produit.nom %></h2>
+      <p class="text-gray-600"><strong>ID :</strong> <%= @produit.id %></p>
+      <p class="text-gray-600"><strong>Catégorie :</strong> <%= @produit.categorie %></p>
+      <p class="text-gray-600"><strong>État :</strong> <%= @produit.etat.humanize %></p>
+      <p class="text-gray-600"><strong>Stock :</strong> <%= @produit.stock > 0 ? @produit.stock : "Rupture" %></p>
+      <p class="text-gray-600"><strong>Prix de vente :</strong> <%= number_to_currency(@produit.prix, unit: "€") %></p>
+    </div>
+
+    <!-- 📌 Affichage conditionnel selon l'état du produit -->
+    <% if @produit.etat == "neuf" || @produit.etat == "occasion" %>
+      <div>
+        <h3 class="text-lg font-semibold mb-2">Informations sur l'achat</h3>
+        <p class="text-gray-600"><strong>Prix d'achat :</strong> <%= number_to_currency(@produit.prix_achat, unit: "€") %></p>
+        <p class="text-gray-600"><strong>Date d'achat :</strong> <%= @produit.date_achat.present? ? @produit.date_achat.strftime("%d/%m/%Y") : "Non renseignée" %></p>
+        <p class="text-gray-600"><strong>Fournisseur :</strong>
+          <%= @produit.fournisseur.present? ? link_to(@produit.fournisseur.nom, fournisseur_path(@produit.fournisseur), class: "text-blue-500 hover:underline") : "Non renseigné" %>
+        </p>
+        <p class="text-gray-600"><strong>Code Fournisseur :</strong> <%= @produit.code_fournisseur.presence || "Non renseigné" %></p>
+      </div>
+
+    <% elsif @produit.etat == "depot_vente" %>
+      <div>
+        <h3 class="text-lg font-semibold mb-2">Détails du Dépôt-Vente</h3>
+        <p class="text-gray-600"><strong>Prix du déposant :</strong> <%= number_to_currency(@produit.prix_deposant, unit: "€") %></p>
+        <p class="text-gray-600"><strong>Date de dépôt :</strong> <%= @produit.date_depot.present? ? @produit.date_depot.strftime("%d/%m/%Y") : "Non renseignée" %></p>
+        <p class="text-gray-600"><strong>Nom du déposant :</strong>
+          <%= @produit.client.present? ? link_to(@produit.client.nom, client_path(@produit.client), class: "text-blue-500 hover:underline") : "Non renseigné" %>
+        </p>
+        <% if @produit.observation.present? %>
+          <p class="text-gray-600"><strong>Observation :</strong> <%= @produit.observation %></p>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- 📌 Code-barre -->
+  <div class="mt-4">
+    <p class="text-gray-600"><strong>Code-barre :</strong> <%= @produit.code_barre.presence || "Non généré" %></p>
+    <p class="text-gray-600"><strong>Impression code-barre :</strong> <%= @produit.impression_code_barre? ? "Oui" : "Non" %></p>
+  </div>
+
+  <!-- 📌 Autres images -->
+  <% if @produit.images.attached? && @produit.images.count > 1 %>
+    <div class="mt-6">
+      <h3 class="text-lg font-semibold">Autres images</h3>
+      <div class="grid grid-cols-3 gap-4 mt-2">
+        <% @produit.images.each_with_index do |image, index| %>
+          <% next if index == 0 %> <!-- On ignore la première image déjà affichée -->
+          <%= image_tag image.variant(resize_to_limit: [150, 150]), class: "rounded shadow" %>
+        <% end %>
+      </div>
+    </div>
   <% end %>
 
-  <div class="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-md">
-  <h2 class="text-3xl font-bold text-center mb-6"><%= @produit.nom %></h2>
-
-  <!-- Affichage de l'image du produit -->
-  <% if @produit.image.attached? %>
-    <div class="flex justify-center mb-6">
-      <%= image_tag @produit.image.variant(resize_to_limit: [300, 300]).processed, class: "rounded-lg shadow-md w-64 h-auto object-cover" %>
-    </div>
-    <% else %>
-      <p class="text-gray-500 text-center">Aucune image disponible</p>
-    <% end %>
-
-  <!-- Informations du produit -->
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <div>
-      <p class="text-gray-700 text-sm">Description :</p>
-      <p class="text-lg font-semibold text-gray-900"><%= @produit.description %></p>
-    </div>
-
-    <div>
-      <p class="text-gray-700 text-sm">Catégorie :</p>
-      <p class="text-lg font-semibold text-gray-900"><%= @produit.categorie %></p>
-    </div>
-
-    <div>
-      <p class="text-gray-700 text-sm">Prix de vente :</p>
-      <p class="text-lg font-semibold text-blue-600"><%= @produit.prix %> €</p>
-    </div>
-
-    <div>
-      <p class="text-gray-700 text-sm">Prix d'achat :</p>
-      <p class="text-lg font-semibold text-green-600"><%= @produit.prix_achat.present? ? "#{@produit.prix_achat} €" : "Non renseigné" %></p>
-    </div>
-
-    <div>
-      <p class="text-gray-700 text-sm">Stock :</p>
-      <p class="text-lg font-semibold text-gray-900"><%= @produit.stock %></p>
-    </div>
-
-    <div>
-      <p class="text-gray-700 text-sm">Date d'achat :</p>
-      <p class="text-lg font-semibold text-gray-900"><%= @produit.date_achat.present? ? @produit.date_achat.strftime("%d/%m/%Y") : "Non renseigné" %></p>
-    </div>
-
-    <div>
-      <p class="text-gray-700 text-sm">Fournisseur :</p>
-      <p class="text-lg font-semibold text-gray-900">
-        <% if @produit.fournisseur.present? %>
-          <%= @produit.fournisseur.nom %>
-        <% else %>
-          Non renseigné
-        <% end %>
-      </p>
-    </div>
-
-    <div>
-      <p class="text-gray-700 text-sm">Facture :</p>
-      <% if @produit.facture.attached? %>
-        <p class="text-lg font-semibold text-blue-500">
-          <%= link_to "Télécharger la facture", url_for(@produit.facture), target: "_blank", class: "underline hover:text-blue-700" %>
-        </p>
-      <% else %>
-        <p class="text-lg font-semibold text-gray-900">Aucune facture disponible</p>
-      <% end %>
-    </div>
+  <!-- 📌 Actions -->
+  <div class="mt-6">
+    <%= link_to "Modifier", edit_produit_path(@produit), class: "text-yellow-500 hover:underline" %> |
+    <%= link_to "Retour", produits_path, class: "text-blue-500 hover:underline" %>
   </div>
-
-  <!-- Boutons d'actions -->
-  <div class="mt-6 flex justify-between">
-    <%= link_to "Retour à la liste", produits_path, class: "px-4 py-2 bg-gray-300 text-gray-900 rounded-md hover:bg-gray-400" %>
-    <div class="flex space-x-4">
-      <%= link_to "Modifier", edit_produit_path(@produit), class: "px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700" %>
-      <%= link_to "Supprimer", @produit, method: :delete, data: { confirm: "Êtes-vous sûr de vouloir supprimer ce produit ?" }, class: "px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700" %>
-    </div>
-  </div>
-</div>
-
-
 </div>
