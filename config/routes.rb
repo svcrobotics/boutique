@@ -16,10 +16,6 @@ Rails.application.routes.draw do
       get :generate_pdf
     end
   end
-  resources :produits do
-    post :generate_label, on: :member  # Pour une seule étiquette
-    post :generate_multiple_labels, on: :collection  # Pour toutes les étiquettes
-  end
 
   get "ventes/export", to: "ventes#export_ventes", as: :export_ventes
   get "ventes/export_interface", to: "ventes#index", as: :export_interface_ventes
@@ -28,6 +24,7 @@ Rails.application.routes.draw do
     post :recherche_produit, on: :collection
     post :retirer_produit, on: :collection
     post :modifier_quantite, on: :collection
+    post :modifier_prix, on: :collection
     get :imprimer_ticket, on: :member
   end
 
@@ -43,10 +40,23 @@ Rails.application.routes.draw do
 
   resources :clotures do
     get :imprimer, on: :member
+    get :preview, on: :member
     post :cloture_z, on: :collection
     post :cloture_mensuelle, on: :collection
   end
 
+  resources :produits do
+    member do
+      post :generate_label
+      get "supprimer_photo/:photo_id", action: :supprimer_photo, as: :supprimer_photo
+    end
+
+    collection do
+      post :generate_multiple_labels
+    end
+  end
+
+  get "turbo_demo", to: "pages#turbo_demo"
 
   # get "texte", to: "textes#show", as: :texte
 

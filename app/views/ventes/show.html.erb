@@ -32,7 +32,13 @@
           <td class="px-3 py-2"><%= vp.produit.code_barre %></td>
           <td class="px-3 py-2 text-right"><%= vp.quantite %></td>
           <td class="px-3 py-2 text-right"><%= number_to_currency(vp.prix_unitaire) %></td>
-          <td class="px-3 py-2"><%= vp.produit.client.present? ? "#{vp.produit.client.prenom} #{vp.produit.client.nom}" : "-" %></td>
+          <td class="px-3 py-2">
+            <% if vp.produit.client.present? %>
+              <%= link_to "#{vp.produit.client.prenom} #{vp.produit.client.nom}", client_path(vp.produit.client), class: "text-blue-600 hover:underline" %>
+            <% else %>
+              -
+            <% end %>
+          </td>
           <td class="px-3 py-2"><%= number_to_currency(vp.produit.prix_deposant) %></td>
           <td class="px-3 py-2 text-right"><%= number_to_currency(vp.prix_unitaire * vp.quantite) %></td>
         </tr>

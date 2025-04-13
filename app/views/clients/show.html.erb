@@ -34,6 +34,7 @@
               <tr>
                 <th class="px-4 py-3 text-left">Nom</th>
                 <th class="px-4 py-3 text-left">Catégorie</th>
+                <th class="px-4 py-3 text-left">Stock</th>
                 <th class="px-4 py-3 text-right">Prix demandé</th>
                 <th class="px-4 py-3 text-left">Statut</th>
                 <th class="px-4 py-3 text-left">Date de dépôt</th>
@@ -45,6 +46,7 @@
                 <tr class="border-t hover:bg-gray-50">
                   <td class="px-4 py-2"><%= link_to produit.nom, produit_path(produit), class: "text-blue-600 hover:underline" %></td>
                   <td class="px-4 py-2"><%= produit.categorie %></td>
+                  <td class="px-4 py-2"><%= produit.stock %></td>
                   <td class="px-4 py-2 text-right"><%= number_to_currency(produit.prix_deposant) %></td>
                   <td class="px-4 py-2"><%= produit.ventes.any? ? "✔️ Vendu" : "❌ Non vendu" %></td>
                   <td class="px-4 py-2"><%= produit.date_depot&.strftime("%d/%m/%Y") %></td>
@@ -62,40 +64,44 @@
     </div>
   <br>
     <!-- Versements effectués -->
-    <h3 class="text-xl font-semibold mb-2 mt-6">💸 Versements effectués</h3>
-    <% versements = @client.versements.order(created_at: :desc) %>
-    <% if versements.any? %>
-      <table class="table-auto w-full border mb-6">
-        <thead>
-          <tr class="bg-gray-100">
-            <th class="px-4 py-2">Reçu</th>
-            <th class="px-4 py-2">Montant</th>
-            <th class="px-4 py-2">Date</th>
-            <th class="px-4 py-2">Méthode</th>
-            <th class="px-4 py-2">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% versements.each do |versement| %>
-            <tr class="border-t">
-              <td class="px-4 py-2 font-mono"><%= versement.numero_recu %></td>
-              <td class="px-4 py-2 text-right"><%= number_to_currency(versement.montant) %></td>
-              <td class="px-4 py-2"><%= versement.created_at.strftime("%d/%m/%Y") %></td>
-              <td class="px-4 py-2"><%= versement.methode_paiement %></td>
-              <td class="px-4 py-2">
-                <%= link_to "🖨️ Imprimer", imprimer_versement_path(versement), method: :get, class: "text-blue-600 hover:underline" %>
-              </td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
+    <% if @client.versements.any? %>
+      <h2 class="text-xl font-bold mt-6 mb-2">💳 Versements effectués</h2>
+      <% @client.versements.order(created_at: :desc).each do |versement| %>
+        <div class="mb-6 border rounded shadow p-4">
+          <h3 class="font-semibold text-gray-700 mb-2">Reçu n°<%= versement.numero_recu %> — <%= l(versement.created_at, format: :short) %></h3>
+          <table class="table-auto w-full border">
+            <thead>
+              <tr class="bg-green-100">
+                <th class="px-4 py-2">Produit</th>
+                <th class="px-4 py-2">Vente</th>
+                <th class="px-4 py-2 text-center">Quantité</th>
+                <th class="px-4 py-2 text-right">Montant</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% versement.produits_versements.each do |pv| %>
+                <% next unless pv.produit.client == @client %>
+                <tr>
+                  <td class="border px-4 py-2"><%= pv.produit.nom %></td>
+                  <td class="border px-4 py-2">#<%= pv.vente_id %></td>
+                  <td class="border px-4 py-2 text-center"><%= pv.quantite %></td>
+                  <td class="border px-4 py-2 text-right"><%= number_to_currency(pv.produit.prix_deposant * pv.quantite) %></td>
+                </tr>
+              <% end %>
+              <tr class="font-bold">
+                <td colspan="3" class="border px-4 py-2 text-right">Total</td>
+                <td class="border px-4 py-2 text-right"><%= number_to_currency(versement.montant) %></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      <% end %>
     <% else %>
       <p class="italic text-green-700">✅ Aucun versement effectué pour cette déposante.</p>
     <% end %>
-
   <% end %>
   <br>
-  <h3 class="text-2xl font-semibold">💼 Versements à venir</h3>
+  <h3 class="text-2xl font-semibold">💼 Paiements en attente</h3>
   <!-- Paiements en attente (partiel) -->
   <turbo-frame id="paiements_en_attente">
     <%= render partial: 'paiements/paiements_en_attente', locals: { paiements_en_attente: @paiements_en_attente } %>

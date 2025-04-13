@@ -1,38 +1,41 @@
-<!-- app/views/versements/new.html.erb -->
-<h1 class="text-2xl font-bold mb-6">💸 Nouveau versement à <%= @client.prenom %> <%= @client.nom %></h1>
+<h2 class="text-2xl font-bold mb-4">💸 Paiement à effectuer</h2>
 
-<% if @produits.any? %>
+<%= form_with url: client_versements_path(@client), method: :post do |f| %>
   <table class="table-auto w-full border mb-6">
     <thead>
       <tr class="bg-gray-100">
         <th class="px-4 py-2">Produit</th>
-        <th class="px-4 py-2">Date vente</th>
-        <th class="px-4 py-2">Prix déposant</th>
+        <th class="px-4 py-2">Vente</th>
+        <th class="px-4 py-2 text-center">Quantité</th>
+        <th class="px-4 py-2 text-right">Montant</th>
       </tr>
     </thead>
     <tbody>
-      <% @produits.each do |produit| %>
-        <tr class="border-t">
-          <td class="px-4 py-2"><%= produit.nom %></td>
-          <td class="px-4 py-2">
-            <%= produit.ventes.last&.date_vente&.strftime("%d/%m/%Y") || "Non trouvé" %>
-          </td>
-          <td class="px-4 py-2 text-right">
-            <%= number_to_currency(produit.prix_deposant) %>
-          </td>
-        </tr>
+      <% @produits_a_payer.each do |produit, lignes| %>
+        <% lignes.each do |ligne| %>
+          <% vente = ligne[:vente] %>
+          <% quantite = ligne[:quantite] %>
+          <tr class="border-t">
+            <td class="px-4 py-2"><%= produit.nom %></td>
+            <td class="px-4 py-2">#<%= vente.id %> - <%= vente.created_at.strftime("%d/%m/%Y") %></td>
+            <td class="px-4 py-2 text-center"><%= quantite %></td>
+            <td class="px-4 py-2 text-right">
+              <%= number_to_currency(produit.prix_deposant * quantite) %>
+            </td>
+            <!-- Champs cachés -->
+            <%= hidden_field_tag "lignes[][produit_id]", produit.id %>
+            <%= hidden_field_tag "lignes[][vente_id]", vente.id %>
+            <%= hidden_field_tag "lignes[][quantite]", quantite %>
+          </tr>
+        <% end %>
       <% end %>
     </tbody>
   </table>
 
-  <p class="text-lg font-semibold">Total à verser : <%= number_to_currency(@total) %> en espèces.</p>
+  <div class="mb-4">
+    <label for="methode_paiement" class="block font-medium">Méthode de paiement :</label>
+    <%= select_tag :methode_paiement, options_for_select(["Espèces", "Chèque", "Virement", "Autre"]), class: "border rounded p-2" %>
+  </div>
 
-  <%= button_to "💰 Confirmer le versement", client_versements_path(@client), method: :post,
-    class: "mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700" %>
-
-
-<% else %>
-  <p class="text-red-600">Aucun produit en attente de versement.</p>
+  <%= f.submit "💰 Effectuer le versement", class: "bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700" %>
 <% end %>
-
-<%= link_to "↩ Retour", client_path(@client), class: "inline-block mt-4 text-blue-600 hover:underline" %>

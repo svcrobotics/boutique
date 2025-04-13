@@ -20,6 +20,9 @@ class VentesController < ApplicationController
   end
 
   def new
+    @vente = Vente.new
+    @vente.client = Client.find_by(nom: params[:client_nom]) if params[:client_nom].present?
+    @vente.mode_paiement = "CB" # valeur par défaut
     session[:ventes] ||= {}
 
     if params[:code_barre].present?
@@ -30,11 +33,18 @@ class VentesController < ApplicationController
         session[:ventes][produit.id.to_s] ||= 0
         session[:ventes][produit.id.to_s] += 1
         redirect_to new_vente_path and return
+      else
+        flash[:alert] = "Produit introuvable avec le code-barres : #{params[:code_barre]}"
       end
     end
 
-    @quantites = session[:ventes].transform_keys(&:to_i)
+    @ventes = session[:ventes]
+    @quantites = session[:ventes].transform_keys(&:to_i).transform_values do |v|
+      v.is_a?(Hash) ? v["quantite"].to_i : v.to_i
+    end
+
     @produits = Produit.where(id: @quantites.keys).index_by(&:id)
+    @prix_unitaire = (session[:ventes_prix] || {}).transform_keys(&:to_i)
   end
 
   def recherche_produit
@@ -59,6 +69,27 @@ class VentesController < ApplicationController
 
   def retirer_produit
     session[:ventes]&.delete(params[:produit_id].to_s)
+    @produits = Produit.find(session[:ventes].keys).index_by(&:id)
+    @quantites = session[:ventes].transform_keys(&:to_i)
+
+    respond_to do |format|
+      format.turbo_stream { render "recherche_produit" }
+      format.html { redirect_to new_vente_path }
+    end
+  end
+
+  def modifier_quantite
+    id = params[:produit_id].to_s
+    qte = params[:quantite].to_i
+
+    session[:ventes] ||= {}
+    if qte > 0
+      session[:ventes][id] ||= { "quantite" => qte, "prix" => Produit.find(id).prix, "remise" => 0 }
+      session[:ventes][id]["quantite"] = qte
+    else
+      session[:ventes].delete(id)
+    end
+
     @produits = Produit.find(session[:ventes].keys).index_by(&:id)
     @quantites = session[:ventes].transform_keys(&:to_i)
 
@@ -161,7 +192,7 @@ class VentesController < ApplicationController
     wb.add_worksheet(name: "Ventes #{mois}") do |sheet|
       sheet.add_row [
         "Date de vente", "Numéro de la vente", "Nom du produit", "Catégorie", "État",
-        "Taux de TVA", "Prix d'achat", "Prix déposante", "Prix de vente TTC", "Marge",
+        "Taux de TVA", "Prix d'achat", "Prix déposant", "Quantité", "Total déposant", "Prix de vente TTC", "Marge",
         "Nom de la déposante", "Date de versement", "Reçu", "Mode de paiement de la cliente", "Mode de versement à la déposante"
       ]
 
@@ -172,7 +203,8 @@ class VentesController < ApplicationController
           prix_unit = vp.prix_unitaire
           total_ttc = prix_unit * quantite
           prix_achat = produit.prix_achat
-          prix_deposante = produit.prix_deposant
+          prix_deposante = produit.prix_deposant || 0
+          total_deposant = quantite * prix_deposante
           deposante = produit.client if produit.en_depot?
           versement = Versement.joins(:ventes).where(ventes: { id: vente.id }, client: deposante).first if deposante
 
@@ -190,12 +222,13 @@ class VentesController < ApplicationController
           # Marge
           marge =
             if produit.en_depot?
-              total_ttc - (prix_deposante || 0)
+              total_ttc - ((prix_deposante || 0) * quantite)
             elsif produit.etat == "occasion"
-              total_ttc - (prix_achat || 0)
+              total_ttc - ((prix_achat || 0) * quantite)
             else
-              total_ttc
+              total_ttc * quantite
             end
+
 
           # Infos versement
           nom_deposante = deposante ? "#{deposante.prenom} #{deposante.nom}" : "N/A"
@@ -212,6 +245,8 @@ class VentesController < ApplicationController
             taux_tva,
             sprintf("%.2f", prix_achat || 0),
             sprintf("%.2f", prix_deposante || 0),
+            quantite,
+            total_deposant,
             sprintf("%.2f", total_ttc),
             sprintf("%.2f", marge),
             nom_deposante,

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_04_03_211419) do
+ActiveRecord::Schema[8.0].define(version: 2025_04_12_195832) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -144,6 +144,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_03_211419) do
     t.string "code_barre"
     t.boolean "impression_code_barre"
     t.string "code_fournisseur"
+    t.boolean "vendu", default: false
+  end
+
+  create_table "produits_versements", force: :cascade do |t|
+    t.integer "produit_id", null: false
+    t.integer "versement_id", null: false
+    t.integer "quantite"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "vente_id"
+    t.index ["produit_id"], name: "index_produits_versements_on_produit_id"
+    t.index ["vente_id"], name: "index_produits_versements_on_vente_id"
+    t.index ["versement_id"], name: "index_produits_versements_on_versement_id"
   end
 
   create_table "ventes", force: :cascade do |t|
@@ -154,7 +167,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_03_211419) do
     t.datetime "updated_at", null: false
     t.decimal "total", precision: 10, scale: 2
     t.string "mode_paiement"
+    t.integer "versement_id"
     t.index ["client_id"], name: "index_ventes_on_client_id"
+    t.index ["versement_id"], name: "index_ventes_on_versement_id"
   end
 
   create_table "ventes_produits", force: :cascade do |t|
@@ -190,7 +205,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_03_211419) do
   add_foreign_key "paiements", "clients"
   add_foreign_key "paiements_ventes", "paiements"
   add_foreign_key "paiements_ventes", "ventes"
+  add_foreign_key "produits_versements", "produits"
+  add_foreign_key "produits_versements", "versements"
   add_foreign_key "ventes", "clients"
+  add_foreign_key "ventes", "versements"
   add_foreign_key "ventes_produits", "produits"
   add_foreign_key "ventes_produits", "ventes"
   add_foreign_key "versements", "clients"

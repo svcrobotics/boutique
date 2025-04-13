@@ -42,27 +42,29 @@
   <table class="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
     <thead class="bg-gray-100 text-gray-700">
       <tr>
-        <!--<th class="px-4 py-2 text-left">Fournisseur</th> -->
-        <!--<th class="px-4 py-2 text-left">Code</th>-->
         <th class="px-4 py-2 text-left">Nom</th>
-        <!--<th class="px-4 py-2 text-left">Prix Achat</th>-->
+        <th class="px-4 py-2 text-left">En dépot?</th>
         <th class="px-4 py-2 text-left">Prix Vente</th>
         <th class="px-4 py-2 text-left">Stock</th>
-        <!--<th class="px-4 py-2 text-left">Mise à jour</th>-->
         <th class="px-4 py-2 text-left">Actions</th>
       </tr>
     </thead>
     <tbody>
       <% if @produits.any? %>
         <% @produits.each do |produit| %>
-          <tr class="border-b">
-            <!--<td class="px-4 py-2"><%= produit.fournisseur&.nom %></td>-->
-            <!--<td class="px-4 py-2"><%= produit.code_fournisseur %></td>-->
+          <!--<td class="border-b">
+            <% if produit.photos.attached? %>
+              <%#= image_tag produit.photos.first.variant(resize_to_limit: [80, 80]),
+                class: "w-20 h-20 object-cover rounded shadow" %>
+            <% else %>
+              <div class="w-20 h-20 bg-gray-200 flex items-center justify-center rounded text-gray-500">
+                Pas d'image
+              </div>
+            <% end %>-->
             <td class="px-4 py-2"><%= produit.nom %></td>
-            <!--<td class="px-4 py-2"><%= produit.prix_achat %></td>-->
+            <td class="px-4 py-2"><%= produit.en_depot %></td>
             <td class="px-4 py-2"><%= produit.prix %></td>
             <td class="px-4 py-2"><%= produit.stock %></td>
-            <!--<td class="px-4 py-2"><%= produit.updated_at %></td>-->
             <td class="px-4 py-2 flex space-x-2">
               <%= button_to "Voir", produit_path(produit), 
                           method: :get, 

@@ -1,8 +1,7 @@
-<!-- app/views/ventes/new.html.erb sans Stimulus -->
 <div class="max-w-3xl mx-auto bg-white shadow rounded p-6">
   <h1 class="text-2xl font-semibold mb-6">🛒 Encaissement</h1>
 
-  <!-- FORMULAIRE CODE-BARRES (redirige en HTML) -->
+  <!-- FORMULAIRE CODE-BARRES -->
   <%= form_with url: recherche_produit_ventes_path, method: :post, local: true do |f| %>
     <div class="mb-4">
       <%= f.label :code_barre, "Code-barres" %>
@@ -10,37 +9,59 @@
     </div>
   <% end %>
 
-  <!-- TABLEAU DES PRODUITS SCANNÉS -->
   <% if @produits.any? %>
     <table class="table-auto w-full mb-6 border">
       <thead>
         <tr class="bg-gray-100">
           <th class="px-4 py-2">Produit</th>
           <th class="px-4 py-2">Quantité</th>
-          <th class="px-4 py-2">Prix</th>
+          <th class="px-4 py-2">Prix unitaire</th>
           <th class="px-4 py-2">Total</th>
           <th class="px-4 py-2">Actions</th>
         </tr>
       </thead>
       <tbody>
+        <% total = 0 %>
         <% @produits.each do |id, produit| %>
           <% quantite = @quantites[id] %>
+          <% prix_unitaire = @prix_unitaire[id] || produit.prix %>
+          <% total_produit = (prix_unitaire * quantite).round(2) %>
+          <% total += total_produit %>
+
           <tr class="border-t">
             <td class="px-4 py-2"><%= produit.nom %></td>
+
+            <!-- Quantité -->
             <td class="px-4 py-2">
-              <%= form_with url: modifier_quantite_ventes_path, method: :post, local: true do |f| %>
+              <%= form_with url: modifier_quantite_ventes_path, method: :post, local: true do %>
                 <%= hidden_field_tag :produit_id, produit.id %>
                 <%= number_field_tag :quantite, quantite, min: 1, class: "w-16 border rounded" %>
                 <%= submit_tag "OK", class: "ml-2 px-2 py-1 bg-blue-500 text-white rounded" %>
               <% end %>
             </td>
-            <td class="px-4 py-2"><%= number_to_currency(produit.prix) %></td>
-            <td class="px-4 py-2"><%= number_to_currency(produit.prix * quantite) %></td>
+
+            <!-- Prix unitaire -->
+            <td class="px-4 py-2">
+              <%= form_with url: modifier_prix_ventes_path, method: :post, local: true do %>
+                <%= hidden_field_tag :produit_id, produit.id %>
+                <%= number_field_tag :prix, prix_unitaire, step: 0.01, class: "w-20 border rounded text-right" %>
+                <%= submit_tag "OK", class: "ml-2 px-2 py-1 bg-blue-500 text-white rounded" %>
+              <% end %>
+            </td>
+
+            <!-- Total -->
+            <td class="px-4 py-2 text-right"><%= number_to_currency(total_produit) %></td>
+
+            <!-- Retirer -->
             <td class="px-4 py-2">
               <%= button_to "Retirer", retirer_produit_ventes_path(produit_id: produit.id), method: :post, class: "text-red-600" %>
             </td>
           </tr>
         <% end %>
+        <tr class="border-t font-semibold">
+          <td colspan="3" class="px-4 py-2 text-right">Total :</td>
+          <td colspan="2" class="px-4 py-2 text-right"><%= number_to_currency(total) %></td>
+        </tr>
       </tbody>
     </table>
   <% else %>
@@ -50,11 +71,16 @@
   <!-- FORMULAIRE ENCAISSEMENT -->
   <%= form_with url: ventes_path, method: :post, local: true do %>
     <div class="mb-4">
-      <label for="client_nom" class="block font-medium text-gray-700">Cliente</label>
-      <%= text_field_tag :client_nom, params[:client_nom], list: "clients_list",
-            class: "w-full rounded border-gray-300 shadow-sm",
-            placeholder: "Nom de la cliente (ou vide pour sans cliente)" %>
+      <label class="block font-medium text-gray-700 mb-1">Client</label>
+      <div class="flex items-center gap-2">
+        <%= text_field_tag :client_nom, params[:client_nom], list: "clients_list",
+          class: "flex-1 rounded border border-gray-300 shadow-sm px-2 py-1",
+          placeholder: "Nom du client (ou vide pour sans client)" %>
 
+        <%= link_to "➕ Nouveau client", new_client_path(retour: "ventes"),
+          data: { turbo_frame: "client_form" },
+          class: "whitespace-nowrap px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" %>
+      </div>
       <datalist id="clients_list">
         <% Client.order(:nom).pluck(:nom).uniq.each do |nom| %>
           <option value="<%= nom %>">
@@ -63,10 +89,10 @@
     </div>
 
     <div class="mb-4">
-      <label for="mode_paiement" class="block font-medium text-gray-700">Mode de paiement</label>
-      <%= select_tag :mode_paiement, options_for_select(["Espèces", "Carte bancaire", "AMEX", "Chèque"], params[:mode_paiement]),
-          prompt: "Sélectionner un mode de paiement",
-          class: "w-full rounded border-gray-300 shadow-sm" %>
+      <label class="block font-medium text-gray-700">Mode de paiement</label>
+      <%= select_tag :mode_paiement,
+        options_for_select(["Espèces", "Carte bancaire", "AMEX", "Chèque"], params[:mode_paiement] || "Carte bancaire"),
+        class: "w-full rounded border-gray-300 shadow-sm" %>
     </div>
 
     <div class="text-right">
@@ -75,4 +101,6 @@
       </button>
     </div>
   <% end %>
+
+  <%= turbo_frame_tag "client_form" %>
 </div>

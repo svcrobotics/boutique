@@ -11,7 +11,7 @@ class PaiementsController < ApplicationController
       @versements = Versement.includes(:client).order(created_at: :desc)
     end
 
-    @paiements_en_attente = paiements_en_attente
+    @paiements_en_attente = VersementsAFaireHelper.call
   end
 
 
@@ -75,13 +75,65 @@ class PaiementsController < ApplicationController
   end
 
   def montant_a_verser(client)
-    produits_non_payes(client).sum(&:prix_deposant)
+    total = 0
+
+    client.produits.each do |produit|
+      next unless produit.en_depot?
+      next unless produit.vendu?
+      next unless produit.client == client
+      next unless produit.ventes.all? { |vente| vente.paiements.empty? }
+
+      produit.ventes.each do |vente|
+        vente.ventes_produits.where(produit_id: produit.id).each do |vp|
+          total += produit.prix_deposant * vp.quantite
+        end
+      end
+    end
+
+    total
+  end
+
+  def paiements_en_attente
+    # Regroupe les quantités déjà versées par (produit_id, vente_id)
+    deja_payes = ProduitsVersement.group(:produit_id, :vente_id).sum(:quantite)
+
+    paiements_groupes = Hash.new { |h, k| h[k] = [] }
+
+    # Parcourt toutes les ventes dans l’ordre
+    Vente.includes(ventes_produits: { produit: :client }).order(created_at: :asc).each do |vente|
+      vente.ventes_produits.each do |vp|
+        produit = vp.produit
+        client  = produit.client
+        next unless produit && client && produit.en_depot?
+
+        # Vérifie combien il reste à verser pour ce produit dans cette vente
+        deja_verse = deja_payes[[ produit.id, vente.id ]] || 0
+        quantite_restante = vp.quantite - deja_verse
+
+        next if quantite_restante <= 0
+
+        paiements_groupes[client] << {
+          produit: produit,
+          quantite: quantite_restante,
+          prix_unitaire: produit.prix_deposant,
+          vente: vente
+        }
+      end
+    end
+
+    # Retourne un tableau pour affichage dans la vue
+    paiements_groupes.map do |client, lignes|
+      total = lignes.sum { |l| l[:prix_unitaire] * l[:quantite] }
+
+      {
+        client: client,
+        total: total,
+        lignes: lignes
+      }
+    end
   end
 
 
-  def produits_non_payes(client)
-    client.produits.select(&:impaye?)
-  end
 
   def generer_recu_texte(paiement)
     largeur = 42
@@ -106,14 +158,16 @@ class PaiementsController < ApplicationController
 
     total = 0
 
-    produits.each do |produit|
-      nom = produit.nom.truncate(largeur)
-      montant = sprintf("%.2f €", produit.prix_deposant)
+    produits.each do |produit, quantite|
+      nom = "#{produit.nom.truncate(largeur - 10)} x#{quantite}"
+      montant_total = produit.prix_deposant * quantite
+      montant = sprintf("%.2f €", montant_total)
       lignes << nom
       lignes << " " * (largeur - montant.length) + montant
       lignes << "-" * largeur
-      total += produit.prix_deposant
+      total += montant_total
     end
+
 
     lignes << "TOTAL PAYE :".ljust(largeur - 12) + sprintf("%.2f €", total).rjust(12)
     lignes << "-" * largeur
@@ -124,10 +178,20 @@ class PaiementsController < ApplicationController
   end
 
   def produits_payes_par(paiement)
-    paiement.ventes.flat_map(&:ventes_produits).map(&:produit).select do |produit|
-      produit.en_depot? && produit.vendu? && produit.client == paiement.client
-    end.uniq
+    produits_quantites = Hash.new(0)
+
+    paiement.ventes.each do |vente|
+      vente.ventes_produits.each do |vp|
+        produit = vp.produit
+        next unless produit.en_depot? && produit.vendu? && produit.client == paiement.client
+
+        produits_quantites[produit] += vp.quantite
+      end
+    end
+
+    produits_quantites
   end
+
 
   def encode_with_iconv(text)
     tmp_input = Rails.root.join("tmp", "ticket_utf8.txt")

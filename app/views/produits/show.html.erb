@@ -4,11 +4,11 @@
 
   <!-- 📌 Affichage de l'image principale -->
   <div class="mb-4">
-    <% if @produit.images.attached? %>
-      <%= image_tag @produit.images.first, class: "w-full h-64 object-cover rounded-md" %>
-    <% else %>
-      <div class="w-full h-64 flex items-center justify-center bg-gray-200 rounded-md">
-        <span class="text-gray-500">Aucune image</span>
+    <% if @produit.photos.attached? %>
+      <div class="grid grid-cols-2 gap-2">
+        <% @produit.photos.each do |photo| %>
+          <%= image_tag photo.variant(resize_to_limit: [300, 300]), class: "rounded shadow" %>
+        <% end %>
       </div>
     <% end %>
   </div>

@@ -9,12 +9,13 @@
   </div>
 <% end %>
 
-
 <h1 class="text-2xl font-bold text-center my-6">
   <%= @client.new_record? ? "Créer un Client" : "Modifier le Client" %>
 </h1>
 
-<%= form_with(model: @client, local: true) do |form| %>
+<%= form_with model: client, url: client.persisted? ? client_path(client, retour: retour) : clients_path(retour: retour) do |form| %>
+
+
   <!-- Nom -->
   <div class="mb-4">
     <%= form.label :nom, "Nom", class: "block text-sm font-medium text-gray-700" %>
@@ -54,7 +55,7 @@
   <!-- Boutons -->
   <div class="mt-4 flex space-x-2">
     <%= link_to "Annuler", clients_path, class: "px-4 py-2 bg-gray-300 rounded hover:bg-gray-400" %>
-    <%= form.submit "Enregistrer", class: "px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" %>
+    <%= form.submit "Créer le client", class: "px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" %>
   </div>
 <% end %>
 

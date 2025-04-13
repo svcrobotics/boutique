@@ -43,7 +43,7 @@
               🧾 Vente n°<%= vente.id %> — <%= l(vente.date_vente || vente.created_at, format: :short) %>
             </p>
             <p class="text-sm text-gray-600">
-              Cliente : <%= vente.client&.nom || "Sans cliente" %> — 
+              Client : <%= vente.client&.nom || "Sans client" %> — 
               Paiement : <%= vente.mode_paiement || "N/A" %> — 
               Total : <strong><%= number_to_currency(vente.total) %></strong>
             </p>

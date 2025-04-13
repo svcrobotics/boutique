@@ -24,6 +24,32 @@
                     id: "produit_etat" %>
   </div>
 
+  <% if @produit.photos.attached? %>
+    <div class="mb-4">
+      <p class="font-medium text-gray-700 mb-2">Photos existantes :</p>
+      <div class="flex flex-wrap gap-2">
+        <% @produit.photos.each do |photo| %>
+          <div class="relative">
+            <%= image_tag photo.variant(resize_to_limit: [100, 100]), class: "rounded shadow" %>
+            <%= link_to "✕", supprimer_photo_produit_path(@produit, photo_id: photo.id),
+            method: :delete,
+            data: { turbo_method: :delete, confirm: "Supprimer cette photo ?" },
+            class: "absolute top-0 right-0 bg-red-500 text-white text-xs px-1 rounded-full" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+
+  <div class="mb-4">
+    <%= form.label :photos, "Ajouter des photos", class: "block font-medium text-gray-700" %>
+    <%= form.file_field :photos, multiple: true, direct_upload: true,
+        class: "w-full border-gray-300 shadow-sm rounded" %>
+    <p class="text-sm text-gray-500">Laisser vide si tu ne veux pas ajouter d'autres photos.</p>
+  </div>
+
+
   <!-- Nom -->
   <div>
     <%= form.label :nom, "Nom du produit", class: "block text-sm font-medium text-gray-700" %>
@@ -140,7 +166,7 @@
       neufOccasionFields.classList.add("hidden")
 
       // Valeurs par défaut
-      if (stockInput) stockInput.value = 1
+      //if (stockInput) stockInput.value = 1
 
       if (dateDepotInput && !dateDepotInput.value) {
         const today = new Date().toISOString().split("T")[0]

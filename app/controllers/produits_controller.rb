@@ -46,9 +46,15 @@ class ProduitsController < ApplicationController
     end
   end
 
-
   def new
     @produit = Produit.new
+  end
+
+  def supprimer_photo
+    @produit = Produit.find(params[:id])
+    photo = @produit.photos.find(params[:photo_id])
+    photo.purge
+    redirect_to edit_produit_path(@produit), notice: "Photo supprimée."
   end
 
   def create
@@ -180,7 +186,7 @@ class ProduitsController < ApplicationController
     pdf.bounding_box([ 0, label_height ], width: label_width, height: label_height) do
       pdf.stroke_bounds
       pdf.move_down 10
-      pdf.text produit.nom.capitalize, size: 10, align: :center
+      pdf.text produit.nom, size: 10, align: :center
       pdf.move_down 0
       pdf.text "Prix: #{produit.prix} EUR", size: 15, align: :center
       pdf.move_down 0
@@ -188,17 +194,18 @@ class ProduitsController < ApplicationController
       # Infos spécifiques selon l'état du produit
       case produit.etat
       when "neuf"
-        pdf.text "#{produit.fournisseur&.nom} - Code: #{produit.code_fournisseur}", size: 7, align: :center
+        pdf.text "#{produit.fournisseur&.nom} - #{produit.code_fournisseur}", size: 7, align: :center
         pdf.move_down 0
-        pdf.text "Neuf - Code Barre: #{produit.code_barre}", size: 7, align: :center
+        pdf.text "Neuf - Code-barre: #{produit.code_barre}", size: 7, align: :center
       when "depot_vente"
-        pdf.text "Client: #{produit.client&.ancien_id || 'N/A'}", size: 7, align: :center
+        ancien_id = produit.client&.ancien_id.presence || "N/A"
+        pdf.text "Ancien ID: #{ancien_id}", size: 7, align: :center
         pdf.move_down 0
-        pdf.text "Dépôt-Vente - Code barre: #{produit.code_barre}", size: 7, align: :center
+        pdf.text "Dépôt-Vente - Code-barre: #{produit.code_barre}", size: 7, align: :center
       when "occasion"
         pdf.text "#{produit.fournisseur&.nom}", size: 7, align: :center
         pdf.move_down 0
-        pdf.text "Occasion - C.Barre: #{produit.code_barre}", size: 7, align: :center
+        pdf.text "Occasion - Code-barre: #{produit.code_barre}", size: 7, align: :center
       end
 
       # Génération et intégration du code-barres si présent
@@ -232,6 +239,8 @@ class ProduitsController < ApplicationController
   end
 
   def produit_params
-    params.require(:produit).permit(:code_fournisseur, :code_barre, :impression_code_barre, :etat, :vendu, :prix_deposant, :date_depot, :produit_id, :observation, :nom, :description, :prix, :prix_achat, :stock, :categorie, :date_achat, :facture, :fournisseur_id, :client_id, :en_depot, images: [])
+    params.require(:produit).permit(:code_fournisseur, :code_barre, :impression_code_barre, :etat,
+    :vendu, :prix_deposant, :date_depot, :produit_id, :observation, :nom, :description, :prix,
+    :prix_achat, :stock, :categorie, :date_achat, :facture, :fournisseur_id, :client_id, :en_depot, photos: [])
   end
 end
