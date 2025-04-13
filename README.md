@@ -1,24 +1,43 @@
-# README
+# 🛍️ Boutique – Application de gestion pour dépôt-vente
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+**Boutique** est une application Ruby on Rails conçue pour gérer un commerce de dépôt-vente, avec un accent sur la simplicité, l’efficacité et une utilisation optimisée sur tablette ou ordinateur.
 
-Things you may want to cover:
+---
 
-* Ruby version
+## ✨ Fonctionnalités principales
 
-* System dependencies
+- 🧾 **Encaissement rapide** avec scan de code-barres et gestion des remises
+- 💸 **Versements aux déposants** avec tickets imprimables
+- 📦 **Gestion des produits** : neufs, d’occasion ou en dépôt
+- 👩‍💼 **Fiches clients complètes** avec historique d’achats et de dépôts
+- 📊 **Statistiques de ventes** (journalières, mensuelles, ticket moyen…)
+- 🧾 **Clôtures Z journalières** et **clôtures mensuelles** avec impression
+- 🖨️ Compatible avec imprimantes tickets, douchettes et tiroirs-caisses
 
-* Configuration
+---
 
-* Database creation
+## 🛠️ Stack technique
 
-* Database initialization
+- Ruby 3.4.1  
+- Rails 8.0.1  
+- Hotwire (Turbo + Stimulus)  
+- Tailwind CSS  
+- SQLite (dev) → PostgreSQL (prod recommandé)
 
-* How to run the test suite
+---
 
-* Services (job queues, cache servers, search engines, etc.)
+## 📸 Captures d’écran (à venir)
 
-* Deployment instructions
+---
 
-* ...
+## 🔒 Projet privé
+
+Ce projet est en cours de développement en vue d’une commercialisation.  
+Si vous êtes intéressé pour devenir **client bêta** ou pour en discuter, contactez-moi.
+
+---
+
+## 📩 Contact
+
+Victor – Développeur indépendant  
+📧 svcrobotics@gmail.com
