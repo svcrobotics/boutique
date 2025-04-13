@@ -26,7 +26,12 @@
 
 ---
 
-## 📸 Captures d’écran (à venir)
+## 📸 Captures d’écran 
+
+Voici quelques écrans de l'application Boutique :
+
+![Liste des produits](https://github.com/svcrobotics/boutique/assets/images/liste_des_produits.png)
+![Encaissement](https://github.com/ton-pseudo/boutique/assets/images/encaissement.png)
 
 ---
 
