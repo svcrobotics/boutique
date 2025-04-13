@@ -30,8 +30,8 @@
 
 Voici quelques écrans de l'application Boutique :
 
-![Liste des produits](https://github.com/svcrobotics/boutique/app/assets/images/liste_des_produits.png)
-![Encaissement](https://github.com/ton-pseudo/boutique/app/assets/images/encaissement.png)
+![Liste des produits](app/assets/images/liste_des_produits.png)
+![Encaissement](app/assets/images/encaissement.png)
 
 ---
 
