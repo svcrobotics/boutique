@@ -21,7 +21,7 @@ class Produit < ApplicationRecord
   validates :nom, presence: true, length: { maximum: 35 }
   validates :categorie, inclusion: { in: CATEGORIES }
   validates :code_barre, uniqueness: true
-  validates :code_fournisseur, uniqueness: true, allow_blank: true
+  # validates :code_fournisseur, uniqueness: true, allow_blank: true
   validates :etat, presence: true, inclusion: { in: ETATS_VALIDES }
   validates :stock, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :prix_achat, :prix, :prix_deposant,
@@ -71,8 +71,6 @@ class Produit < ApplicationRecord
     self.categorie = categorie.capitalize if categorie.present?
   end
 
-
-
   # Génère un code-barre unique si aucun n’a été fourni
   def generer_code_barre
     return if self.code_barre.present?
@@ -85,8 +83,6 @@ class Produit < ApplicationRecord
       end
     end
   end
-
-
 
   def valider_coherence_etat_et_depot
     if en_depot? && etat != "depot_vente"

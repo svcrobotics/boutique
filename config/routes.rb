@@ -58,6 +58,9 @@ Rails.application.routes.draw do
 
   get "turbo_demo", to: "pages#turbo_demo"
 
+  post "ventes/modifier_remise", to: "ventes#modifier_remise", as: :modifier_remise_ventes
+
+
   # get "texte", to: "textes#show", as: :texte
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html

@@ -45,7 +45,7 @@
             <p class="text-sm text-gray-600">
               Client : <%= vente.client&.nom || "Sans client" %> — 
               Paiement : <%= vente.mode_paiement || "N/A" %> — 
-              Total : <strong><%= number_to_currency(vente.total) %></strong>
+              Total : <strong><%= number_to_currency(vente.total_net) %></strong>
             </p>
           </div>
 

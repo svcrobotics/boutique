@@ -155,6 +155,6 @@ class VersementsController < ApplicationController
   def imprimer_versement(versement)
     texte = generer_ticket_versement(versement)
     fichier = encode_with_iconv(texte)
-    system("lp", "-d", "ticket", fichier.to_s)
+    system("lp", "-d", "SEWOO_LKT_Series", fichier.to_s)
   end
 end

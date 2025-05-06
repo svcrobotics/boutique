@@ -5,10 +5,9 @@
     <p><strong>Date :</strong> <%= l(@vente.date_vente || @vente.created_at, format: :long) %></p>
     <p><strong>Cliente :</strong> <%= @vente.client&.nom || "Sans cliente" %></p>
     <p><strong>Mode de paiement :</strong> <%= @vente.mode_paiement || "Non précisé" %></p>
-    <p><strong>Total :</strong> <%= number_to_currency(@vente.total) %></p>
+    <p><strong>Total brut :</strong> <%= number_to_currency(@vente.total_brut) %></p>
+    <p><strong>Total net (après remises) :</strong> <%= number_to_currency(@vente.total_net) %></p>
   </div>
-
-
 
   <h2 class="text-xl font-semibold mt-6 mb-2">🛍 Produits vendus</h2>
   <table class="w-full text-sm border-collapse">
@@ -40,7 +39,14 @@
             <% end %>
           </td>
           <td class="px-3 py-2"><%= number_to_currency(vp.produit.prix_deposant) %></td>
-          <td class="px-3 py-2 text-right"><%= number_to_currency(vp.prix_unitaire * vp.quantite) %></td>
+          <% total_brut = vp.prix_unitaire * vp.quantite %>
+          <% remise_pct = vp.remise.to_d %>
+          <% remise_euros = (total_brut * (remise_pct / 100)).round(2) %>
+          <% total_net = (total_brut - remise_euros).round(2) %>
+          <td class="px-3 py-2 text-right">
+            <div><strong><%= number_to_currency(total_net) %></strong></div>
+            <div class="text-xs text-gray-500">(- <%= number_to_currency(remise_euros) %> | <%= remise_pct.to_i %>%)</div>
+          </td>
         </tr>
       <% end %>
     </tbody>

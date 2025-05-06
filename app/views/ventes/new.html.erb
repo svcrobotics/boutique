@@ -15,7 +15,8 @@
         <tr class="bg-gray-100">
           <th class="px-4 py-2">Produit</th>
           <th class="px-4 py-2">Quantité</th>
-          <th class="px-4 py-2">Prix unitaire</th>
+          <th class="px-4 py-2">Prix</th>
+          <th class="px-4 py-2">Remise</th>
           <th class="px-4 py-2">Total</th>
           <th class="px-4 py-2">Actions</th>
         </tr>
@@ -25,35 +26,40 @@
         <% @produits.each do |id, produit| %>
           <% quantite = @quantites[id] %>
           <% prix_unitaire = @prix_unitaire[id] || produit.prix %>
-          <% total_produit = (prix_unitaire * quantite).round(2) %>
+          <% remise = session[:ventes][produit.id.to_s]["remise"].to_d rescue 0.to_d %>
+          <% total_produit = (prix_unitaire * quantite * (1 - remise / 100)).round(2) %>
           <% total += total_produit %>
 
           <tr class="border-t">
-            <td class="px-4 py-2"><%= produit.nom %></td>
+            <td class="px-4 py-2 text-center"><%= produit.nom %></td>
 
             <!-- Quantité -->
-            <td class="px-4 py-2">
-              <%= form_with url: modifier_quantite_ventes_path, method: :post, local: true do %>
-                <%= hidden_field_tag :produit_id, produit.id %>
-                <%= number_field_tag :quantite, quantite, min: 1, class: "w-16 border rounded" %>
-                <%= submit_tag "OK", class: "ml-2 px-2 py-1 bg-blue-500 text-white rounded" %>
-              <% end %>
+            <td class="px-4 py-2 text-center">
+              <%= quantite %>
             </td>
 
             <!-- Prix unitaire -->
-            <td class="px-4 py-2">
-              <%= form_with url: modifier_prix_ventes_path, method: :post, local: true do %>
+            <td class="px-4 py-2 text-center">
+              <%= number_to_currency(prix_unitaire) %>
+            </td>
+
+            <!-- Remise -->
+            <td class="px-4 py-2 text-center">
+              <%= form_with url: modifier_remise_ventes_path, method: :post, local: true do %>
                 <%= hidden_field_tag :produit_id, produit.id %>
-                <%= number_field_tag :prix, prix_unitaire, step: 0.01, class: "w-20 border rounded text-right" %>
+                <%= select_tag :remise,
+                  options_for_select((0..70).step(10).map { |v| ["#{v} %", v] },
+                  selected: session[:ventes][produit.id.to_s]["remise"].to_i),
+                  class: "w-24 border rounded text-right" %>
                 <%= submit_tag "OK", class: "ml-2 px-2 py-1 bg-blue-500 text-white rounded" %>
               <% end %>
             </td>
 
             <!-- Total -->
-            <td class="px-4 py-2 text-right"><%= number_to_currency(total_produit) %></td>
+            <td class="px-4 py-2 text-center"><%= number_to_currency(total_produit) %></td>
 
             <!-- Retirer -->
-            <td class="px-4 py-2">
+            <td class="px-4 py-2 text-center">
               <%= button_to "Retirer", retirer_produit_ventes_path(produit_id: produit.id), method: :post, class: "text-red-600" %>
             </td>
           </tr>
@@ -91,7 +97,7 @@
     <div class="mb-4">
       <label class="block font-medium text-gray-700">Mode de paiement</label>
       <%= select_tag :mode_paiement,
-        options_for_select(["Espèces", "Carte bancaire", "AMEX", "Chèque"], params[:mode_paiement] || "Carte bancaire"),
+        options_for_select(["CB", "Espèces", "AMEX", "Chèque"], params[:mode_paiement] || "CB"),
         class: "w-full rounded border-gray-300 shadow-sm" %>
     </div>
 

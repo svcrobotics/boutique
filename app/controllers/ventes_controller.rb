@@ -9,9 +9,9 @@ class VentesController < ApplicationController
 
     @stats = {
       today_count: Vente.where(created_at: today).count,
-      today_total: Vente.where(created_at: today).sum(:total),
+      today_total: Vente.where(created_at: today).sum(:total_net),
       month_count: Vente.where(created_at: this_month).count,
-      month_total: Vente.where(created_at: this_month).sum(:total)
+      month_total: Vente.where(created_at: this_month).sum(:total_net)
     }
   end
 
@@ -23,15 +23,20 @@ class VentesController < ApplicationController
     @vente = Vente.new
     @vente.client = Client.find_by(nom: params[:client_nom]) if params[:client_nom].present?
     @vente.mode_paiement = "CB" # valeur par défaut
-    session[:ventes] ||= {}
 
     if params[:code_barre].present?
       code = correct_scanner_input(params[:code_barre])
       produit = Produit.find_by(code_barre: code)
 
       if produit
-        session[:ventes][produit.id.to_s] ||= 0
-        session[:ventes][produit.id.to_s] += 1
+        id = produit.id.to_s
+        session[:ventes] ||= {}
+        session[:ventes][id] ||= {
+          "quantite" => 0,
+          "prix" => produit.prix.to_d,
+          "remise" => 0.to_d
+        }
+        session[:ventes][id]["quantite"] += 1
         redirect_to new_vente_path and return
       else
         flash[:alert] = "Produit introuvable avec le code-barres : #{params[:code_barre]}"
@@ -39,13 +44,12 @@ class VentesController < ApplicationController
     end
 
     @ventes = session[:ventes]
-    @quantites = session[:ventes].transform_keys(&:to_i).transform_values do |v|
-      v.is_a?(Hash) ? v["quantite"].to_i : v.to_i
-    end
+    @quantites = @ventes.transform_keys(&:to_i).transform_values { |v| v["quantite"] }
+    @prix_unitaire = @ventes.transform_keys(&:to_i).transform_values { |v| v["prix"].to_d }
 
     @produits = Produit.where(id: @quantites.keys).index_by(&:id)
-    @prix_unitaire = (session[:ventes_prix] || {}).transform_keys(&:to_i)
   end
+
 
   def recherche_produit
     code = correct_scanner_input(params[:code_barre])
@@ -78,41 +82,26 @@ class VentesController < ApplicationController
     end
   end
 
-  def modifier_quantite
+  def modifier_remise
     id = params[:produit_id].to_s
-    qte = params[:quantite].to_i
-
-    session[:ventes] ||= {}
-    if qte > 0
-      session[:ventes][id] ||= { "quantite" => qte, "prix" => Produit.find(id).prix, "remise" => 0 }
-      session[:ventes][id]["quantite"] = qte
-    else
-      session[:ventes].delete(id)
-    end
-
-    @produits = Produit.find(session[:ventes].keys).index_by(&:id)
-    @quantites = session[:ventes].transform_keys(&:to_i)
-
-    respond_to do |format|
-      format.turbo_stream { render "recherche_produit" }
-      format.html { redirect_to new_vente_path }
-    end
-  end
-
-  def modifier_quantite
-    id = params[:produit_id].to_s
-    qte = params[:quantite].to_i
+    remise = params[:remise].to_d
 
     session[:ventes] ||= {}
 
-    if qte > 0
-      session[:ventes][id] = qte
-    else
-      session[:ventes].delete(id)
+    # Sécurise le format
+    if session[:ventes][id].is_a?(Integer)
+      produit = Produit.find_by(id: id)
+      session[:ventes][id] = {
+        "quantite" => session[:ventes][id],
+        "prix" => produit&.prix.to_d || 0.to_d,
+        "remise" => 0.to_d
+      }
     end
 
+    session[:ventes][id]["remise"] = remise
+
     @produits = Produit.find(session[:ventes].keys).index_by(&:id)
-    @quantites = session[:ventes].transform_keys(&:to_i)
+    @quantites = session[:ventes].transform_keys(&:to_i).transform_values { |v| v["quantite"] }
 
     respond_to do |format|
       format.turbo_stream { render "recherche_produit" }
@@ -129,28 +118,42 @@ class VentesController < ApplicationController
       return
     end
 
-    client = if params[:sans_client] == "1"
-               nil
-    else
-               Client.find_by(nom: params[:client_nom])
-    end
+    client = params[:sans_client] == "1" ? nil : Client.find_by(nom: params[:client_nom])
 
     @vente = Vente.new(
       client: client,
       date_vente: Time.current,
-      total: 0,
-      mode_paiement: params[:mode_paiement]
+      mode_paiement: params[:mode_paiement],
+      total_brut: 0,
+      total_net: 0
     )
 
-    ventes_data.each do |produit_id_str, quantite|
+    total_brut = 0
+    total_net = 0
+
+    ventes_data.each do |produit_id_str, infos|
       produit = Produit.find(produit_id_str)
+      quantite = infos["quantite"].to_i
+      prix_unitaire = infos["prix"].to_d
+      remise_pct = infos["remise"].to_d
+
+      total_ligne_brut = prix_unitaire * quantite
+      remise_euros = (total_ligne_brut * (remise_pct / 100)).round(2)
+      total_ligne_net = total_ligne_brut - remise_euros
+
       @vente.ventes_produits.build(
         produit: produit,
         quantite: quantite,
-        prix_unitaire: produit.prix
+        prix_unitaire: prix_unitaire,
+        remise: remise_pct # en pourcentage
       )
-      @vente.total += produit.prix * quantite
+
+      total_brut += total_ligne_brut
+      total_net  += total_ligne_net
     end
+
+    @vente.total_brut = total_brut.round(2)
+    @vente.total_net  = total_net.round(2)
 
     if @vente.save
       @vente.ventes_produits.each do |vp|
@@ -163,6 +166,7 @@ class VentesController < ApplicationController
       redirect_to new_vente_path, alert: "Erreur lors de l'enregistrement de la vente."
     end
   end
+
 
   def destroy
     @vente = Vente.find(params[:id])
@@ -192,8 +196,8 @@ class VentesController < ApplicationController
     wb.add_worksheet(name: "Ventes #{mois}") do |sheet|
       sheet.add_row [
         "Date de vente", "Numéro de la vente", "Nom du produit", "Catégorie", "État",
-        "Taux de TVA", "Prix d'achat", "Prix déposant", "Quantité", "Total déposant", "Prix de vente TTC", "Marge",
-        "Nom de la déposante", "Date de versement", "Reçu", "Mode de paiement de la cliente", "Mode de versement à la déposante"
+        "Taux de TVA", "Prix d'achat", "Prix déposant", "Quantité", "Remise (€)", "Total déposant", "Prix vente TTC (net)", "Marge",
+        "Nom de la déposante", "Date de versement", "Reçu", "Mode de paiement cliente", "Mode de versement déposante"
       ]
 
       ventes.each do |vente|
@@ -201,14 +205,18 @@ class VentesController < ApplicationController
           produit = vp.produit
           quantite = vp.quantite
           prix_unit = vp.prix_unitaire
-          total_ttc = prix_unit * quantite
           prix_achat = produit.prix_achat
           prix_deposante = produit.prix_deposant || 0
           total_deposant = quantite * prix_deposante
+          remise_pct = vp.remise.to_d
+          total_brut = prix_unit * quantite
+          remise_euros = (total_brut * remise_pct / 100).round(2)
+          total_ttc = total_brut - remise_euros
+
           deposante = produit.client if produit.en_depot?
           versement = Versement.joins(:ventes).where(ventes: { id: vente.id }, client: deposante).first if deposante
 
-          # TVA et HT
+          # TVA
           if produit.etat == "neuf"
             tva = (total_ttc / 1.2 * 0.2).round(2)
             taux_tva = "20%"
@@ -219,18 +227,17 @@ class VentesController < ApplicationController
 
           total_ht = (total_ttc - tva).round(2)
 
-          # Marge
+          # Marge réelle
           marge =
             if produit.en_depot?
-              total_ttc - ((prix_deposante || 0) * quantite)
+              total_ttc - (prix_deposante * quantite)
             elsif produit.etat == "occasion"
               total_ttc - ((prix_achat || 0) * quantite)
             else
-              total_ttc * quantite
+              total_ttc
             end
 
-
-          # Infos versement
+          # Infos déposante
           nom_deposante = deposante ? "#{deposante.prenom} #{deposante.nom}" : "N/A"
           date_versement = versement&.created_at&.strftime("%d/%m/%Y") || "N/A"
           numero_recu = versement&.numero_recu || "N/A"
@@ -246,7 +253,8 @@ class VentesController < ApplicationController
             sprintf("%.2f", prix_achat || 0),
             sprintf("%.2f", prix_deposante || 0),
             quantite,
-            total_deposant,
+            sprintf("%.2f", remise_euros),
+            sprintf("%.2f", total_deposant),
             sprintf("%.2f", total_ttc),
             sprintf("%.2f", marge),
             nom_deposante,
@@ -313,79 +321,61 @@ class VentesController < ApplicationController
       ligne_info = "#{produit.categorie.capitalize} - #{produit.etat.capitalize} - #{tva_str}"
       lignes << ligne_info
 
-      lignes << vp.produit.nom[0..41] # une ligne max
+      lignes << produit.nom[0..41] # une ligne max
       qte = vp.quantite
-      pu = format("%.2f €", vp.prix_unitaire)
-      total = format("%.2f €", vp.prix_unitaire * qte)
-      lignes << "#{qte.to_s.rjust(10)} x #{pu.rjust(1)} => #{total.rjust(10)}"
-      lignes << "-" * 42
+      pu = vp.prix_unitaire
+      remise_pct = vp.remise.to_d rescue 0.to_d
+
+      montant_brut = pu * qte
+      remise_euros = (montant_brut * (remise_pct / 100)).round(2)
+      montant_net = (montant_brut - remise_euros).round(2)
+
+      lignes << "#{qte.to_s.rjust(10)} x #{format('%.2f €', pu)} => #{format('%.2f €', montant_brut).rjust(10)}"
+      lignes << "- Remise : #{format('%.2f €', remise_euros)} (#{remise_pct.to_i}%)"
+      lignes << "Total net : #{format('%.2f €', montant_net)}"
+      lignes << "-" * largeur
+
       total_articles += qte
     end
 
     lignes << "-" * largeur
-    lignes << "Total articles : #{total_articles}".rjust(42)
+    lignes << "Total articles : #{total_articles}".rjust(largeur)
 
-    # ✅ Total global
-    produits_neufs = vente.ventes_produits.select { |vp| vp.produit.etat == "neuf" }
-    ttc_20 = produits_neufs.sum { |vp| vp.quantite * vp.prix_unitaire }
+    # ✅ Calculs TVA / HT / TTC avec remises en %
+    ttc_20 = vente.ventes_produits.select { |vp| vp.produit.etat == "neuf" }.sum do |vp|
+      brut = vp.quantite * vp.prix_unitaire
+      remise = brut * (vp.remise.to_d / 100)
+      brut - remise
+    end
 
     ht_20 = (ttc_20 / 1.2).round(2)
     tva_20 = (ttc_20 - ht_20).round(2)
 
-    produits_autres = vente.ventes_produits.reject { |vp| vp.produit.etat == "neuf" }
-    ttc_0 = produits_autres.sum { |vp| vp.quantite * vp.prix_unitaire }
+    ttc_0 = vente.ventes_produits.reject { |vp| vp.produit.etat == "neuf" }.sum do |vp|
+      brut = vp.quantite * vp.prix_unitaire
+      remise = brut * (vp.remise.to_d / 100)
+      brut - remise
+    end
 
     ht_total = (ht_20 + ttc_0).round(2)
     tva_total = tva_20
     ttc_total = (ttc_0 + ttc_20).round(2)
 
-    # Affichage dans le ticket
     lignes << "-" * largeur
     montant_col = 10
-
-
     lignes << "Sous-total HT".ljust(largeur - montant_col) + "#{'%.2f €' % ht_total}".rjust(montant_col)
     lignes << "TVA (20%)".ljust(largeur - montant_col) + "#{'%.2f €' % tva_total}".rjust(montant_col)
     lignes << "Total TTC".ljust(largeur - montant_col) + "#{'%.2f €' % ttc_total}".rjust(montant_col)
     lignes << "Payé en #{vente.mode_paiement}".ljust(largeur)
     lignes << "-" * largeur
 
-
     lignes << "-" * largeur
     lignes << format("%-10s%-10s%-10s%-10s", "Taux TVA", "TVA", "HT", "TTC")
     lignes << "-" * largeur
 
-    # Initialisation
-    ht_0 = ttc_0 = 0
-    ht_20 = ttc_20 = 0
-
-    vente.ventes_produits.includes(:produit).each do |vp|
-      produit = vp.produit
-      total_produit = vp.quantite * vp.prix_unitaire
-
-      if produit.etat == "neuf"
-        ttc_20 += total_produit
-      else
-        ttc_0 += total_produit
-      end
-    end
-
-    # Calculs
-    ht_20 = (ttc_20 / 1.2).round(2)
-    tva_20 = (ttc_20 - ht_20).round(2)
-
-    ht_0 = ttc_0
-    tva_0 = 0
-
-    # Affichage des lignes
-    lignes << format("%-10s%-10s%-10s%-10s", "0%", "#{sprintf('%.2f €', tva_0)}", "#{sprintf('%.2f €', ht_0)}", "#{sprintf('%.2f €', ttc_0)}")
+    lignes << format("%-10s%-10s%-10s%-10s", "0%", "#{sprintf('%.2f €', 0)}", "#{sprintf('%.2f €', ttc_0)}", "#{sprintf('%.2f €', ttc_0)}")
     lignes << format("%-10s%-10s%-10s%-10s", "20%", "#{sprintf('%.2f €', tva_20)}", "#{sprintf('%.2f €', ht_20)}", "#{sprintf('%.2f €', ttc_20)}")
     lignes << "-" * largeur
-
-    # Totaux
-    tva_total = (tva_0 + tva_20).round(2)
-    ht_total  = (ht_0 + ht_20).round(2)
-    ttc_total = (ttc_0 + ttc_20).round(2)
 
     lignes << format("%-10s%-10s%-10s%-10s", "TOTAL", "#{sprintf('%.2f €', tva_total)}", "#{sprintf('%.2f €', ht_total)}", "#{sprintf('%.2f €', ttc_total)}")
 
@@ -404,6 +394,7 @@ class VentesController < ApplicationController
     lignes.join("\n")
   end
 
+
   def encode_with_iconv(text)
     tmp_input  = Rails.root.join("tmp", "ticket_utf8.txt")
     tmp_output = Rails.root.join("tmp", "ticket_cp858.txt")
@@ -418,6 +409,6 @@ class VentesController < ApplicationController
     vente = Vente.find(params[:id])
 
     file_to_print = encode_with_iconv(generer_ticket_texte(vente))
-    system("lp", "-d", "ticket", file_to_print.to_s)
+    system("lp", "-d", "SEWOO_LKT_Series", file_to_print.to_s)
   end
 end

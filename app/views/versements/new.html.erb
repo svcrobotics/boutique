@@ -1,4 +1,4 @@
-<h2 class="text-2xl font-bold mb-4">💸 Paiement à effectuer</h2>
+<h2 class="text-2xl font-bold mb-4">💸 Paiement à effectuer => <%= @client.nom %> <%= @client.prenom %></h2>
 
 <%= form_with url: client_versements_path(@client), method: :post do |f| %>
   <table class="table-auto w-full border mb-6">

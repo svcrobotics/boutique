@@ -36,6 +36,10 @@ class Vente < ApplicationRecord
     ventes_produits.sum { |vp| vp.quantite * vp.prix_unitaire }
   end
 
+  def total_remises
+    ventes_produits.sum(&:remise)
+  end
+
   private
 
   def calculer_total

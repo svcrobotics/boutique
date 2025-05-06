@@ -23,6 +23,7 @@ class ProduitsController < ApplicationController
       @produits = @produits.where(
         "produits.nom LIKE :query OR
          produits.code_fournisseur LIKE :query OR
+         produits.code_barre LIKE :query OR
          fournisseurs.nom LIKE :query OR
          clients.nom LIKE :query",
         query: "%#{params[:query]}%"
@@ -188,7 +189,7 @@ class ProduitsController < ApplicationController
       pdf.move_down 10
       pdf.text produit.nom, size: 10, align: :center
       pdf.move_down 0
-      pdf.text "Prix: #{produit.prix} EUR", size: 15, align: :center
+      pdf.text "Prix: #{produit.prix} €", size: 15, align: :center
       pdf.move_down 0
 
       # Infos spécifiques selon l'état du produit
@@ -225,8 +226,9 @@ class ProduitsController < ApplicationController
     File.open(pdf_path, "wb") { |f| f.write(pdf.render) }
 
     # 🖨 Envoi vers l'imprimante Dymo
-    system("lp -d DYMO_LabelWriter_450_Duo_Label #{pdf_path}")
-
+    # system("lp -d DYMO_LabelWriter_450_Duo_Label #{pdf_path}")
+    # system("lp -d LabelWriter-450 #{pdf_path}")
+    system("lp -d DYMO_LabelWriter_450 #{pdf_path}")
     # 🗑 Suppression du fichier temporaire après impression
     File.delete(pdf_path) if File.exist?(pdf_path)
 
