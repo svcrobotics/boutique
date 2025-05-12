@@ -21,9 +21,12 @@
 !/tmp/pids/
 !/tmp/pids/.keep
 
-# Ignore storage (uploaded files in development and any SQLite databases).
+# Ignore general storage files (e.g., uploaded images), but not the SQLite DB
 /storage/*
+!/storage/development.sqlite3
 !/storage/.keep
+
+# Ignore temp storage but keep .keep
 /tmp/storage/*
 !/tmp/storage/
 !/tmp/storage/.keep
