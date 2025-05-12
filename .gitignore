@@ -23,9 +23,8 @@
 
 # Ignore general storage files (e.g., uploaded images), but not the SQLite DB
 /storage/*
-/storage/development.sqlite3
 !/storage/.keep
-/storage/production.sqlite3
+
 
 # Ignore temp storage but keep .keep
 /tmp/storage/*
