@@ -12,7 +12,7 @@ class Produit < ApplicationRecord
   has_many :versements
   has_many :produits_versements
   has_many :versements, through: :produits_versements
-
+  has_many :reassorts, dependent: :destroy
 
   has_many_attached :photos
   has_many_attached :images # ← tu peux supprimer celui que tu n’utilises pas
@@ -21,13 +21,16 @@ class Produit < ApplicationRecord
   validates :nom, presence: true, length: { maximum: 35 }
   validates :categorie, inclusion: { in: CATEGORIES }
   validates :code_barre, uniqueness: true
-  # validates :code_fournisseur, uniqueness: true, allow_blank: true
+  
   validates :etat, presence: true, inclusion: { in: ETATS_VALIDES }
   validates :stock, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :prix_achat, :prix, :prix_deposant,
             numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :impression_code_barre, inclusion: { in: [ true, false ] }
-  validate :valider_coherence_etat_et_depot
+  #validates :valider_coherence_etat_et_depot
+  #validates :taux_remise_fournisseur, presence: true, if: :remise_fournisseur?
+
+
 
   ### === CALLBACKS ===
   before_validation :strip_code_barre, :majuscule_sur_la_premiere_lettre_du_nom, :capitalize_categorie
@@ -47,6 +50,10 @@ class Produit < ApplicationRecord
   # app/models/produit.rb
   def deja_verse?
     ProduitsVersement.exists?(produit_id: id)
+  end
+
+  def prix_affiche
+    en_promo? && prix_promo.present? ? prix_promo : prix
   end
 
   ### === MÉTHODES PRIVÉES ===

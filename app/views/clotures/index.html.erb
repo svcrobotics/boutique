@@ -4,21 +4,42 @@
 
   <!-- 📅 Clôture journalière -->
   <div class="bg-yellow-50 border border-yellow-300 p-4 rounded mb-8">
-    <p class="text-yellow-800 font-semibold text-sm mb-2">📆 Clôture journalière</p>
+    <p class="text-yellow-800 font-semibold text-sm mb-4">📆 Clôture journalière</p>
 
-    <%= form_with url: cloture_z_clotures_path, method: :post do %>
+    <div class="bg-gray-100 border px-4 py-2 rounded mb-4 text-sm">
+      💡 <strong>Il devrait théoriquement y avoir en caisse</strong> : <%= number_to_currency(@fond_caisse_theorique) %>
+      <br>
+      <%= link_to "💶 Voir le détail des espèces", especes_path, class: "inline-block mt-2 text-blue-600 hover:underline" %>
+    </div>
+
+    <%= form_with url: cloture_z_clotures_path, method: :post, local: true do %>
       <div class="flex flex-col md:flex-row md:items-end md:space-x-4 space-y-3 md:space-y-0">
+
+        <!-- Date -->
         <div>
           <%= label_tag :date, "Date de la clôture (AAAA-MM-JJ)", class: "block text-sm font-medium text-gray-700" %>
           <%= text_field_tag :date, Date.current.to_s, class: "mt-1 block w-40 border-gray-300 rounded shadow-sm px-3 py-2" %>
         </div>
+
+        <!-- Fond de caisse final -->
         <div>
-          <%= submit_tag "Clôturer la journée", class: "bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded font-semibold " %>
+          <%= label_tag :fond_caisse_final, "💶 Fond de caisse final (compté)", class: "block text-sm font-medium text-gray-700" %>
+          <%= number_field_tag :fond_caisse_final, nil, step: 0.01, required: true,
+            class: "mt-1 block w-40 border-gray-300 rounded shadow-sm px-3 py-2" %>
         </div>
+
+        <!-- Bouton -->
+        <div>
+          <%= submit_tag "🧾 Clôturer la journée",
+                class: "bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded font-semibold" %>
+        </div>
+
       </div>
     <% end %>
   </div>
+
   <br>
+
   <!-- 📆 Clôture mensuelle -->
   <div class="bg-yellow-50 border border-yellow-300 p-4 rounded mb-8">
     <p class="text-yellow-800 font-semibold text-sm mb-2">📆 Clôture mensuelle</p>

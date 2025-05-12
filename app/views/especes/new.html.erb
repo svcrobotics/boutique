@@ -1,0 +1,34 @@
+<h1 class="text-xl font-bold mb-4">Ajouter un mouvement d'espèces</h1>
+
+<%= form_with url: especes_path, method: :post, local: true do |f| %>
+  <div class="mb-4">
+    <%= label_tag :type_operation, "Type de mouvement en caisse" %><br>
+    <%= select_tag :type_operation,
+      options_for_select([
+        ["➕ J'ai retirer des especes sur mon compte", "apport"],
+        ["➖ J'ai retirer des espéces de la caisse pour mon usage perso", "retrait_perso"],
+        ["➖ J'ai déposer des espéces sur mon compte", "depot_compte"]
+      ]),
+      class: "border rounded px-2 py-1 w-full",
+      required: true %>
+  </div>
+
+  <div class="mb-4">
+    <%= label_tag :compte, "Compte banquaire" %><br>
+    <%= select_tag :compte,
+      options_for_select(["", "Compte pro BNP", "Compte perso BNP", "Compte pro Caisse d'Epargne", "Compte perso Caisse d'Epargne"]),
+      class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  
+  <div class="mb-4">
+    <%= label_tag :montant %><br>
+    <%= number_field_tag :montant, nil, step: 0.01, class: "border rounded px-2 py-1 w-full", required: true %>
+  </div>
+
+  <div class="mb-4">
+    <%= label_tag :date %><br>
+    <%= date_field_tag :date, Date.today, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+
+  <%= submit_tag "Enregistrer", class: "bg-green-600 text-white px-4 py-2 rounded" %>
+<% end %>

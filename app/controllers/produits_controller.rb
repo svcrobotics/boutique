@@ -10,7 +10,7 @@ class ProduitsController < ApplicationController
     if params[:code_barre].present?
       produit = Produit.find_by(code_barre: params[:code_barre])
       if produit
-        render json: { id: produit.id, nom: produit.nom, prix: produit.prix }
+        render json: { id: produit.id, nom: produit.nom, prix: produit.prix_affiche }
       else
         render json: {}, status: :not_found
       end
@@ -39,6 +39,9 @@ class ProduitsController < ApplicationController
       @produits = @produits.where(stock: 0)
     end
 
+    # Récupération complète des produits filtrés avant pagination
+    @produits_globaux = @produits.load
+
     @pagy, @produits = pagy(@produits)
 
     respond_to do |format|
@@ -46,6 +49,7 @@ class ProduitsController < ApplicationController
       format.json { render json: @produits.select(:id, :nom, :prix, :code_barre) }
     end
   end
+
 
   def new
     @produit = Produit.new
@@ -76,6 +80,8 @@ class ProduitsController < ApplicationController
 
   def update
     @produit.en_depot = false if params[:produit][:etat] != "depot_vente"
+
+    puts "🔎 params[:produit] = #{params[:produit].inspect}"
 
     produit_data = produit_params.dup
 
@@ -189,7 +195,38 @@ class ProduitsController < ApplicationController
       pdf.move_down 10
       pdf.text produit.nom, size: 10, align: :center
       pdf.move_down 0
-      pdf.text "Prix: #{produit.prix} €", size: 15, align: :center
+
+      if produit.en_promo? && produit.prix_promo.present?
+        prix_normal = ActionController::Base.helpers.number_to_currency(produit.prix)
+        prix_promo  = ActionController::Base.helpers.number_to_currency(produit.prix_promo)
+
+        pdf.move_down 2
+
+        # Affichage du texte complet (Prix : 89,99 €   50,00 €)
+        texte_complet = "Prix : #{prix_normal}   #{prix_promo}"
+        y = pdf.cursor
+        pdf.text texte_complet, size: 12, align: :center
+
+        # Mesure précise du début du prix_normal dans "Prix : #{prix_normal}"
+        prefix      = "Prix : "
+        prefix_width = pdf.width_of(prefix, size: 12)
+        prix_width   = pdf.width_of(prix_normal, size: 12)
+        total_width  = pdf.width_of(texte_complet, size: 12)
+        x_offset     = (pdf.bounds.width - total_width) / 2
+
+        x1 = x_offset + prefix_width
+        x2 = x1 + prix_width
+        y_line = y - 6
+
+        pdf.stroke do
+          pdf.line [x1, y_line], [x2, y_line + 6] # oblique seulement sur le prix
+        end
+      else
+        pdf.move_down 2
+        prix = ActionController::Base.helpers.number_to_currency(produit.prix)
+        pdf.text "Prix : #{prix}", size: 12, style: :normal, align: :center
+      end
+
       pdf.move_down 0
 
       # Infos spécifiques selon l'état du produit
@@ -243,6 +280,7 @@ class ProduitsController < ApplicationController
   def produit_params
     params.require(:produit).permit(:code_fournisseur, :code_barre, :impression_code_barre, :etat,
     :vendu, :prix_deposant, :date_depot, :produit_id, :observation, :nom, :description, :prix,
-    :prix_achat, :stock, :categorie, :date_achat, :facture, :fournisseur_id, :client_id, :en_depot, photos: [])
+    :prix_achat, :stock, :categorie, :date_achat, :facture, :fournisseur_id, :client_id, :en_depot, :remise_fournisseur, 
+    :taux_remise_fournisseur, :en_promo, :prix_promo, photos: [])
   end
 end

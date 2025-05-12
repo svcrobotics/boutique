@@ -1,0 +1,44 @@
+<h1 class="text-xl font-bold mb-4">Ajouter un réassort pour <%= @produit.nom %></h1>
+
+<%= form_with model: [@produit, @reassort], local: true do |form| %>
+  <% if @reassort.errors.any? %>
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+      <strong>Erreur :</strong>
+      <ul>
+        <% @reassort.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="mb-4">
+    <%= form.label :quantite, "Quantité reçue", class: "block font-medium text-gray-700" %>
+    <%= form.number_field :quantite, class: "mt-1 block w-full border-gray-300 rounded-md shadow-sm", min: 1 %>
+  </div>
+
+  <div class="mb-4">
+    <%= form.label :date, "Date du réassort", class: "block font-medium text-gray-700" %>
+    <%= form.date_field :date, class: "mt-1 block w-full border-gray-300 rounded-md shadow-sm" %>
+  </div>
+
+  <div class="mb-4">
+    <%= form.label :prix_achat, "Prix d'achat unitaire", class: "block font-medium text-gray-700" %>
+    <%= form.number_field :prix_achat, step: 0.01, class: "mt-1 block w-full border-gray-300 rounded-md shadow-sm" %>
+  </div>
+
+  <div class="mb-4 flex items-center space-x-2">
+    <%= form.check_box :remise, {}, true, false %>
+    <%= form.label :remise, "Remise fournisseur ?", class: "text-sm font-medium text-gray-700" %>
+  </div>
+
+  <div class="mb-4">
+    <%= form.label :taux_remise, "Taux de remise (%)", class: "block font-medium text-gray-700" %>
+    <%= form.number_field :taux_remise, step: 1, min: 0, max: 100, class: "mt-1 block w-full border-gray-300 rounded-md shadow-sm" %>
+  </div>
+
+  <div class="flex justify-between mt-6">
+    <%= link_to "Annuler", produit_path(@produit), class: "bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400" %>
+    <%= form.submit "Enregistrer", class: "bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" %>
+  </div>
+<% end %>

@@ -8,3 +8,19 @@
  *
  * Consider organizing styles into separate files for maintainability.
  */
+.prix-barre {
+  position: relative;
+  display: inline-block;
+  color: #9ca3af; /* gris-400 */
+}
+
+.prix-barre::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: red;
+  transform: translateY(-50%);
+}

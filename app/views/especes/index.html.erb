@@ -1,0 +1,46 @@
+<!-- app/views/especes/index.html.erb -->
+<h1 class="text-xl font-bold mb-4">🪙 Mouvements en espèces</h1>
+
+<h2 class="text-xl font-semibold mb-4">💶 État du fond de caisse</h2>
+
+<div class="bg-white border p-4 rounded mb-6 text-lg">
+  Fond de caisse actuel : <strong><%= number_to_currency(@fond_de_caisse) %></strong>
+  <p class="text-sm text-gray-600 mt-1">
+    ℹ️ Ce montant inclut les espèces restantes de la veille. Le fond de caisse est remis à zéro chaque jour dans la clôture.
+  </p>
+</div>
+
+<table class="table-auto w-full border mb-6">
+  <thead>
+    <tr class="bg-gray-100">
+      <th class="px-4 py-2">Date</th>
+      <th class="px-4 py-2">Type</th>
+      <th class="px-4 py-2">Motif</th>
+      <th class="px-4 py-2">Compte</th>
+      <th class="px-4 py-2">Montant</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @mouvements.each do |m| %>
+      <tr>
+        <td class="px-4 py-2"><%= m.date %></td>
+        <td class="px-4 py-2"><%= m.sens.capitalize %></td>
+        <td class="px-4 py-2"><%= m.motif %></td>
+        <td class="px-4 py-2"><%= m.compte.presence || "-" %></td>
+        <td class="px-4 py-2"><%= number_to_currency(m.montant) %></td>
+      </tr>
+    <% end %>
+
+    <% @versements.each do |v| %>
+      <tr class="bg-yellow-50">
+        <td class="px-4 py-2"><%= v.created_at.to_date %></td>
+        <td class="px-4 py-2">Sortie</td>
+        <td class="px-4 py-2">Versement déposante : <%= v.client.nom %></td>
+        <td class="px-4 py-2">-</td>
+        <td class="px-4 py-2"><%= number_to_currency(v.montant) %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<%= link_to "➕ Nouveau mouvement", new_espece_path, class: "bg-blue-500 text-white px-4 py-2 rounded" %>

@@ -18,6 +18,7 @@
           <th class="px-4 py-2">Prix</th>
           <th class="px-4 py-2">Remise</th>
           <th class="px-4 py-2">Total</th>
+          <th class="px-4 py-2">Stock</th>
           <th class="px-4 py-2">Actions</th>
         </tr>
       </thead>
@@ -25,48 +26,53 @@
         <% total = 0 %>
         <% @produits.each do |id, produit| %>
           <% quantite = @quantites[id] %>
-          <% prix_unitaire = @prix_unitaire[id] || produit.prix %>
-          <% remise = session[:ventes][produit.id.to_s]["remise"].to_d rescue 0.to_d %>
+          <% prix_unitaire = produit.en_promo? && produit.prix_promo.present? ? produit.prix_promo : produit.prix %>
+          <% valeur = session[:ventes][produit.id.to_s] rescue {} %>
+          <% remise = valeur.is_a?(Hash) ? valeur["remise"].to_d : 0.to_d %>
           <% total_produit = (prix_unitaire * quantite * (1 - remise / 100)).round(2) %>
           <% total += total_produit %>
 
           <tr class="border-t">
             <td class="px-4 py-2 text-center"><%= produit.nom %></td>
-
-            <!-- Quantité -->
-            <td class="px-4 py-2 text-center">
-              <%= quantite %>
-            </td>
-
-            <!-- Prix unitaire -->
-            <td class="px-4 py-2 text-center">
-              <%= number_to_currency(prix_unitaire) %>
-            </td>
-
-            <!-- Remise -->
-            <td class="px-4 py-2 text-center">
-              <%= form_with url: modifier_remise_ventes_path, method: :post, local: true do %>
-                <%= hidden_field_tag :produit_id, produit.id %>
-                <%= select_tag :remise,
-                  options_for_select((0..70).step(10).map { |v| ["#{v} %", v] },
-                  selected: session[:ventes][produit.id.to_s]["remise"].to_i),
-                  class: "w-24 border rounded text-right" %>
-                <%= submit_tag "OK", class: "ml-2 px-2 py-1 bg-blue-500 text-white rounded" %>
+            <td class="px-4 py-2 text-center"><%= quantite %></td>
+            
+            <td class="px-4 py-2 text-center whitespace-nowrap">
+              <% if produit.en_promo? && produit.prix_promo.present? %>
+                <span class="relative inline-block text-base text-gray-500 font-medium">
+                  <span class="inline-block"><%= number_to_currency(produit.prix) %></span>
+                  <span style="position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background-color: red; transform: rotate(-15deg); transform-origin: left center;"></span>
+                </span>
+                <span class="ml-2 text-red-600 font-bold text-lg"><%= number_to_currency(produit.prix_promo) %></span>
+              <% else %>
+                <%= number_to_currency(produit.prix) %>
               <% end %>
             </td>
 
-            <!-- Total -->
+            <td class="px-4 py-2 text-center">
+              <%= form_with url: modifier_remise_ventes_path, method: :post, local: true do %>
+                <%= hidden_field_tag :produit_id, produit.id %>
+
+                <%= select_tag :remise,
+                  options_for_select((0..70).step(10).map { |v| ["#{v} %", v] }, selected: remise.to_i),
+                  class: "w-24 border rounded text-right",
+                  onchange: "this.form.submit();" %>
+              <% end %>
+            </td>
+
             <td class="px-4 py-2 text-center"><%= number_to_currency(total_produit) %></td>
 
-            <!-- Retirer -->
+            <td class="px-4 py-2 text-center text-sm text-gray-500">
+              Stock : <%= produit.stock %>
+            </td>
             <td class="px-4 py-2 text-center">
               <%= button_to "Retirer", retirer_produit_ventes_path(produit_id: produit.id), method: :post, class: "text-red-600" %>
             </td>
           </tr>
         <% end %>
+
         <tr class="border-t font-semibold">
           <td colspan="3" class="px-4 py-2 text-right">Total :</td>
-          <td colspan="2" class="px-4 py-2 text-right"><%= number_to_currency(total) %></td>
+          <td colspan="3" class="px-4 py-2 text-right"><%= number_to_currency(total) %></td>
         </tr>
       </tbody>
     </table>
@@ -80,13 +86,14 @@
       <label class="block font-medium text-gray-700 mb-1">Client</label>
       <div class="flex items-center gap-2">
         <%= text_field_tag :client_nom, params[:client_nom], list: "clients_list",
-          class: "flex-1 rounded border border-gray-300 shadow-sm px-2 py-1",
-          placeholder: "Nom du client (ou vide pour sans client)" %>
+              class: "flex-1 rounded border border-gray-300 shadow-sm px-2 py-1",
+              placeholder: "Nom du client (ou vide pour sans client)" %>
 
         <%= link_to "➕ Nouveau client", new_client_path(retour: "ventes"),
-          data: { turbo_frame: "client_form" },
-          class: "whitespace-nowrap px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" %>
+              data: { turbo_frame: "client_form" },
+              class: "whitespace-nowrap px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" %>
       </div>
+
       <datalist id="clients_list">
         <% Client.order(:nom).pluck(:nom).uniq.each do |nom| %>
           <option value="<%= nom %>">
@@ -97,12 +104,13 @@
     <div class="mb-4">
       <label class="block font-medium text-gray-700">Mode de paiement</label>
       <%= select_tag :mode_paiement,
-        options_for_select(["CB", "Espèces", "AMEX", "Chèque"], params[:mode_paiement] || "CB"),
-        class: "w-full rounded border-gray-300 shadow-sm" %>
+            options_for_select(["CB", "Espèces", "AMEX", "Chèque"], params[:mode_paiement] || "CB"),
+            class: "w-full rounded border-gray-300 shadow-sm" %>
     </div>
 
     <div class="text-right">
-      <button type="submit" class="w-full bg-green-600 text-white font-semibold text-lg py-3 rounded hover:bg-green-700">
+      <button type="submit"
+        class="w-full bg-green-600 text-white font-semibold text-lg py-3 rounded hover:bg-green-700">
         💳 Encaisser maintenant
       </button>
     </div>

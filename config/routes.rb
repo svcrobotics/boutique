@@ -1,4 +1,9 @@
 Rails.application.routes.draw do
+  get "reassorts/new"
+  get "reassorts/create"
+  get "especes/index"
+  get "especes/new"
+  get "especes/create"
   root "pages#home"
   resources :fournisseurs
   resources :factures
@@ -43,6 +48,7 @@ Rails.application.routes.draw do
     get :preview, on: :member
     post :cloture_z, on: :collection
     post :cloture_mensuelle, on: :collection
+    get :refresh_fond_caisse, on: :collection 
   end
 
   resources :produits do
@@ -54,11 +60,17 @@ Rails.application.routes.draw do
     collection do
       post :generate_multiple_labels
     end
+
+    resources :reassorts, only: [:new, :create] do
+      post :imprimer_etiquettes, on: :member
+    end
   end
 
   get "turbo_demo", to: "pages#turbo_demo"
 
   post "ventes/modifier_remise", to: "ventes#modifier_remise", as: :modifier_remise_ventes
+
+  resources :especes, only: [:index, :new, :create]
 
 
   # get "texte", to: "textes#show", as: :texte

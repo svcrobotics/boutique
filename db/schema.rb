@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_05_06_152406) do
+ActiveRecord::Schema[8.0].define(version: 2025_05_10_134000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -77,6 +77,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_06_152406) do
     t.decimal "total_versements"
     t.decimal "total_encaisse"
     t.integer "total_articles"
+    t.decimal "fond_de_caisse_final"
   end
 
   create_table "factures", force: :cascade do |t|
@@ -98,6 +99,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_06_152406) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "type_fournisseur"
+  end
+
+  create_table "mouvement_especes", force: :cascade do |t|
+    t.string "sens"
+    t.string "motif"
+    t.decimal "montant"
+    t.date "date"
+    t.string "compte"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "paiements", force: :cascade do |t|
@@ -145,6 +156,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_06_152406) do
     t.boolean "impression_code_barre"
     t.string "code_fournisseur"
     t.boolean "vendu", default: false
+    t.boolean "remise_fournisseur", default: false
+    t.integer "taux_remise_fournisseur"
+    t.boolean "en_promo"
+    t.decimal "prix_promo"
   end
 
   create_table "produits_versements", force: :cascade do |t|
@@ -157,6 +172,18 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_06_152406) do
     t.index ["produit_id"], name: "index_produits_versements_on_produit_id"
     t.index ["vente_id"], name: "index_produits_versements_on_vente_id"
     t.index ["versement_id"], name: "index_produits_versements_on_versement_id"
+  end
+
+  create_table "reassorts", force: :cascade do |t|
+    t.integer "produit_id", null: false
+    t.integer "quantite"
+    t.date "date"
+    t.decimal "prix_achat"
+    t.boolean "remise"
+    t.integer "taux_remise"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["produit_id"], name: "index_reassorts_on_produit_id"
   end
 
   create_table "ventes", force: :cascade do |t|
@@ -210,6 +237,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_06_152406) do
   add_foreign_key "paiements_ventes", "ventes"
   add_foreign_key "produits_versements", "produits"
   add_foreign_key "produits_versements", "versements"
+  add_foreign_key "reassorts", "produits"
   add_foreign_key "ventes", "clients"
   add_foreign_key "ventes", "versements"
   add_foreign_key "ventes_produits", "produits"

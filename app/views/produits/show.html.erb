@@ -28,12 +28,22 @@
     <% if @produit.etat == "neuf" || @produit.etat == "occasion" %>
       <div>
         <h3 class="text-lg font-semibold mb-2">Informations sur l'achat</h3>
-        <p class="text-gray-600"><strong>Prix d'achat :</strong> <%= number_to_currency(@produit.prix_achat, unit: "€") %></p>
+        <p class="text-gray-600"><strong>Prix d'achat (remise incluse) :</strong> <%= number_to_currency(@produit.prix_achat, unit: "€") %></p>
         <p class="text-gray-600"><strong>Date d'achat :</strong> <%= @produit.date_achat.present? ? @produit.date_achat.strftime("%d/%m/%Y") : "Non renseignée" %></p>
         <p class="text-gray-600"><strong>Fournisseur :</strong>
           <%= @produit.fournisseur.present? ? link_to(@produit.fournisseur.nom, fournisseur_path(@produit.fournisseur), class: "text-blue-500 hover:underline") : "Non renseigné" %>
         </p>
         <p class="text-gray-600"><strong>Code Fournisseur :</strong> <%= @produit.code_fournisseur.presence || "Non renseigné" %></p>
+        <% if @produit.remise_fournisseur? %>
+          <p class="mt-2 text-sm text-red-600 font-semibold">
+            ✅ Remise fournisseur : <%= @produit.taux_remise_fournisseur %>%<br>
+          </p>
+        <% else %>
+          <p class="mt-2 text-sm text-gray-600">
+            Aucune remise fournisseur appliquée.
+          </p>
+        <% end %>
+
       </div>
 
     <% elsif @produit.etat == "depot_vente" %>
@@ -70,9 +80,48 @@
     </div>
   <% end %>
 
+  <h2 class="text-xl font-bold mt-8 mb-3">📦 Réassorts</h2>
+
+  <% if @produit.reassorts.any? %>
+    <table class="min-w-full text-sm border rounded shadow">
+      <thead class="bg-gray-100 text-gray-700">
+        <tr>
+          <th class="px-3 py-2 text-left">Date</th>
+          <th class="px-3 py-2 text-left">Quantité</th>
+          <th class="px-3 py-2 text-left">Prix achat</th>
+          <th class="px-3 py-2 text-left">Remise</th>
+          <th class="px-3 py-2 text-left">Taux (%)</th>
+          <th class="px-3 py-2 text-left">Étiquettes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @produit.reassorts.order(date: :desc).each do |reassort| %>
+          <tr class="border-t">
+            <td class="px-3 py-2"><%= l reassort.date %></td>
+            <td class="px-3 py-2"><%= reassort.quantite %></td>
+            <td class="px-3 py-2"><%= number_to_currency(reassort.prix_achat) %></td>
+            <td class="px-3 py-2"><%= reassort.remise ? "✅" : "—" %></td>
+            <td class="px-3 py-2"><%= reassort.remise ? "#{reassort.taux_remise} %" : "—" %></td>
+            <td class="px-3 py-2">
+              <%= button_to "🖨️", imprimer_etiquettes_produit_reassort_path(@produit, reassort),
+                  method: :post,
+                  class: "text-sm bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700",
+                  data: { turbo_confirm: "Imprimer #{reassort.quantite} étiquette(s) ?" } %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p class="text-gray-500 italic">Aucun réassort enregistré pour ce produit.</p>
+  <% end %>
+
+
   <!-- 📌 Actions -->
   <div class="mt-6">
     <%= link_to "Modifier", edit_produit_path(@produit), class: "text-yellow-500 hover:underline" %> |
-    <%= link_to "Retour", produits_path, class: "text-blue-500 hover:underline" %>
+    <%= link_to "Retour", produits_path, class: "text-blue-500 hover:underline" %> |
+    <%= link_to "➕ Ajouter un réassort", new_produit_reassort_path(@produit),
+            class: "px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700" %>
   </div>
 </div>

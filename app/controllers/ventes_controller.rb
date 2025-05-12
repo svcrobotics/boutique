@@ -29,11 +29,13 @@ class VentesController < ApplicationController
       produit = Produit.find_by(code_barre: code)
 
       if produit
+        produit.update(stock: 1) if produit.stock <= 0
+
         id = produit.id.to_s
         session[:ventes] ||= {}
         session[:ventes][id] ||= {
           "quantite" => 0,
-          "prix" => produit.prix.to_d,
+          "prix" => produit.prix_affiche.to_d,
           "remise" => 0.to_d
         }
         session[:ventes][id]["quantite"] += 1
@@ -43,9 +45,14 @@ class VentesController < ApplicationController
       end
     end
 
-    @ventes = session[:ventes]
-    @quantites = @ventes.transform_keys(&:to_i).transform_values { |v| v["quantite"] }
-    @prix_unitaire = @ventes.transform_keys(&:to_i).transform_values { |v| v["prix"].to_d }
+    @ventes = session[:ventes] || {}
+    @quantites = @ventes.to_h.transform_keys(&:to_i).transform_values do |v|
+      v.is_a?(Hash) ? v["quantite"].to_i : 1
+    end
+
+    @prix_unitaire = @ventes.to_h.transform_keys(&:to_i).transform_values do |v|
+      v.is_a?(Hash) ? v["prix"].to_d : 0.to_d
+    end
 
     @produits = Produit.where(id: @quantites.keys).index_by(&:id)
   end
@@ -56,10 +63,21 @@ class VentesController < ApplicationController
     produit = Produit.find_by(code_barre: code)
 
     session[:ventes] ||= {}
+
     if produit
+      produit.update(stock: 1) if produit.stock <= 0
+
       id_str = produit.id.to_s
-      session[:ventes][id_str] ||= 0
-      session[:ventes][id_str] += 1
+
+      if session[:ventes][id_str].is_a?(Hash)
+        session[:ventes][id_str]["quantite"] += 1
+      else
+        session[:ventes][id_str] = {
+          "quantite" => 1,
+          "prix" => produit.prix.to_d,
+          "remise" => 0.to_d
+        }
+      end
     end
 
     @produits = Produit.find(session[:ventes].keys).index_by(&:id)
@@ -70,6 +88,7 @@ class VentesController < ApplicationController
       format.html { redirect_to new_vente_path }
     end
   end
+
 
   def retirer_produit
     session[:ventes]&.delete(params[:produit_id].to_s)
