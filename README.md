@@ -206,5 +206,5 @@ Si vous êtes intéressé pour devenir **client bêta** ou pour en discuter, con
 
 ## 📩 Contact
 
-Victor – Développeur indépendant  
+Victor PEREZ– Développeur indépendant  
 📧 svcrobotics@gmail.com
