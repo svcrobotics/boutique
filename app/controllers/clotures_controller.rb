@@ -88,7 +88,7 @@ class CloturesController < ApplicationController
       return
     end
 
-    if Cloture.exists?(date: date, categorie: "mensuelle")
+    if Cloture.exists?(date: date.end_of_month, categorie: "mensuelle")
       redirect_to clotures_path, alert: "❌ Clôture mensuelle déjà enregistrée pour #{mois}."
       return
     end
@@ -104,16 +104,24 @@ class CloturesController < ApplicationController
     end
 
     # Total versements
-    total_versements = Versement.where(created_at: date.beginning_of_month..date.end_of_month).sum(:montant)
+    total_versements = Versement
+      .joins(:produits)
+      .where(created_at: date.beginning_of_month..date.end_of_month)
+      .sum("produits_versements.quantite * produits_versements.montant_unitaire")
+
+    ventes_du_mois = Vente.includes(ventes_produits: :produit)
+      .where(date_vente: date.beginning_of_month..date.end_of_month)
+
+    total_articles = ventes_du_mois.sum { |v| v.ventes_produits.sum(&:quantite) }
 
     # Création en base
     cloture = Cloture.create!(
       categorie: "mensuelle",
-      date: date,
+      date: date.end_of_month,
       total_ht: clotures_jour.sum(:total_ht),
       total_tva: clotures_jour.sum(:total_tva),
       total_ttc: clotures_jour.sum(:total_ttc),
-      total_versements: clotures_jour.sum(:total_versements),
+      total_versements: total_versements,
       total_cb: clotures_jour.sum(:total_cb),
       total_amex: clotures_jour.sum(:total_amex),
       total_especes: clotures_jour.sum(:total_especes),
@@ -121,7 +129,7 @@ class CloturesController < ApplicationController
       total_encaisse: clotures_jour.sum(:total_encaisse),
       total_ventes: clotures_jour.sum(:total_ventes),
       total_clients: clotures_jour.sum(:total_clients),
-      total_articles: clotures_jour.sum(:total_articles),
+      total_articles: total_articles,
       ticket_moyen: clotures_jour.average(:ticket_moyen).to_f.round(2),
       ht_0: clotures_jour.sum(:ht_0),
       ht_20: clotures_jour.sum(:ht_20),
@@ -129,9 +137,7 @@ class CloturesController < ApplicationController
       ttc_20: clotures_jour.sum(:ttc_20),
       tva_20: clotures_jour.sum(:tva_20),
       total_remises: clotures_jour.sum(:total_remises),
-      total_annulations: clotures_jour.sum(:total_annulations),
-      fond_caisse_initial: clotures_jour.sum(:fond_caisse_initial),
-      fond_caisse_final: clotures_jour.sum(:fond_caisse_final)
+      total_annulations: clotures_jour.sum(:total_annulations)
     )
 
     # OpenStruct pour impression
@@ -142,7 +148,7 @@ class CloturesController < ApplicationController
       total_ht: cloture.total_ht,
       total_tva: cloture.total_tva,
       total_ttc: cloture.total_ttc,
-      total_versements: cloture.total_versements,
+      total_versements: total_versements,
       total_cb: cloture.total_cb,
       total_amex: cloture.total_amex,
       total_especes: cloture.total_especes,
@@ -159,8 +165,6 @@ class CloturesController < ApplicationController
       tva_20: cloture.tva_20,
       total_remises: cloture.total_remises,
       total_annulations: cloture.total_annulations,
-      fond_caisse_initial: cloture.fond_caisse_initial,
-      fond_caisse_final: cloture.fond_caisse_final,
       details_ventes: [],
       details_versements: []
     )
@@ -186,6 +190,17 @@ class CloturesController < ApplicationController
   def imprimer
     cloture = Cloture.find(params[:id])
 
+    # Total versements
+    total_versements = Versement
+      .joins(:produits)
+      .where(created_at: cloture.date.beginning_of_month..cloture.date.end_of_month)
+      .sum("produits_versements.quantite * produits_versements.montant_unitaire")
+
+    ventes_du_mois = Vente.includes(ventes_produits: :produit)
+      .where(date_vente: cloture.date.beginning_of_month..cloture.date.end_of_month)
+
+    total_articles = ventes_du_mois.sum { |v| v.ventes_produits.sum(&:quantite) }
+
     # Si c’est une clôture mensuelle, pas besoin de recalculer à partir des ventes
     if cloture.categorie == "mensuelle"
       data = OpenStruct.new(
@@ -194,6 +209,7 @@ class CloturesController < ApplicationController
         ouverture: cloture.date.beginning_of_month,
         total_ventes: cloture.total_ventes,
         total_clients: cloture.total_clients,
+        total_articles: total_articles,
         ticket_moyen: cloture.ticket_moyen,
         total_cb: cloture.total_cb,
         total_amex: cloture.total_amex,
@@ -210,9 +226,7 @@ class CloturesController < ApplicationController
         total_ttc: cloture.total_ttc,
         total_remises: cloture.total_remises,
         total_annulations: cloture.total_annulations,
-        fond_caisse_initial: cloture.fond_caisse_initial,
-        fond_caisse_final: cloture.fond_caisse_final,
-        total_versements: cloture.total_versements || 0,
+        total_versements: total_versements,
         details_ventes: [],
         details_versements: []
       )
@@ -531,12 +545,24 @@ class CloturesController < ApplicationController
   def preview
     cloture = Cloture.find(params[:id])
 
+    # Total versements
+    total_versements = Versement
+      .joins(:produits)
+      .where(created_at: cloture.date.beginning_of_month..cloture.date.end_of_month)
+      .sum("produits_versements.quantite * produits_versements.montant_unitaire")
+
+    ventes_du_mois = Vente.includes(ventes_produits: :produit)
+      .where(date_vente: cloture.date.beginning_of_month..cloture.date.end_of_month)
+
+    total_articles = ventes_du_mois.sum { |v| v.ventes_produits.sum(&:quantite) }
+
     if cloture.categorie == "mensuelle"
       data = OpenStruct.new(
         categorie: "mensuelle",
         date: cloture.date,
         ouverture: cloture.date.beginning_of_month,
         total_ventes: cloture.total_ventes,
+        total_articles: total_articles,
         total_clients: cloture.total_clients,
         ticket_moyen: cloture.ticket_moyen,
         total_cb: cloture.total_cb,
@@ -554,9 +580,7 @@ class CloturesController < ApplicationController
         total_ttc: cloture.total_ttc,
         total_remises: cloture.total_remises,
         total_annulations: cloture.total_annulations,
-        fond_caisse_initial: cloture.fond_caisse_initial,
-        fond_caisse_final: cloture.fond_caisse_final,
-        total_versements: cloture.total_versements || 0,
+        total_versements: total_versements,
         details_ventes: [],
         details_versements: []
       )
@@ -727,9 +751,9 @@ class CloturesController < ApplicationController
 
     # 3️⃣ Statistiques générales
     lignes << "STATISTIQUES"
-    lignes << "Nombre de ventes           : #{data.total_ventes}"
-    lignes << "Nombre d'article vendu     : #{data.total_articles}"
-    lignes << "Nombre de nouveaux clients : #{data.total_clients}"
+    lignes << "Nombre de ventes           : #{data.total_ventes.to_i}"
+    lignes << "Nombre d'article vendu     : #{data.total_articles.to_i}"
+    lignes << "Nombre de nouveaux clients : #{data.total_clients.to_i}"
     lignes << "Ticket moyen               : #{format('%.2f €', data.ticket_moyen)}"
     lignes << "-" * largeur
 
@@ -762,23 +786,25 @@ class CloturesController < ApplicationController
     lignes << "Total annulations     : #{format('%.2f €', data.total_annulations)}"
     lignes << "-" * largeur
 
-    # Fond théorique
-    fond_theorique = data.fond_caisse_initial.to_f +
-                 MouvementEspece.where(date: data.date, sens: "entrée").sum(:montant).to_f -
-                 MouvementEspece.where(date: data.date, sens: "sortie").sum(:montant).to_f -
-                 data.total_versements.to_f
+    unless data.categorie == "mensuelle"
+      # Fond théorique
+      fond_theorique = data.fond_caisse_initial.to_f +
+                   MouvementEspece.where(date: data.date, sens: "entrée").sum(:montant).to_f -
+                   MouvementEspece.where(date: data.date, sens: "sortie").sum(:montant).to_f -
+                   data.total_versements.to_f
 
-    # Différence affichée
-    difference = data.fond_caisse_final.to_f - fond_theorique
+      # Différence affichée
+      difference = data.fond_caisse_final.to_f - fond_theorique
 
 
-    # Divers suite
-    lignes << "FOND DE CAISSE"
-    lignes << "Initial        : #{format('%.2f €', data.fond_caisse_initial)}"
-    lignes << "Théorique     : #{format('%.2f €', fond_theorique)}"
-    lignes << "Final (compté) : #{format('%.2f €', data.fond_caisse_final)}"
-    lignes << "Différence     : #{format('%+.2f €', difference)}"
-    lignes << "-" * largeur
+      # Divers suite
+      lignes << "FOND DE CAISSE"
+      lignes << "Initial        : #{format('%.2f €', data.fond_caisse_initial.to_f)}"
+      lignes << "Théorique     : #{format('%.2f €', fond_theorique)}"
+      lignes << "Final (compté) : #{format('%.2f €', data.fond_caisse_final.to_f)}"
+      lignes << "Différence     : #{format('%+.2f €', difference)}"
+      lignes << "-" * largeur
+    end
 
     # Versements
     lignes << "VERSEMENTS AUX DEPOSANTS"

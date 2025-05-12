@@ -74,8 +74,10 @@ class VersementsController < ApplicationController
       versement.produits_versements.build(
         produit: produit,
         vente_id: vente.id,
-        quantite: quantite
+        quantite: quantite,
+        montant_unitaire: produit.prix_deposant.to_f
       )
+
     end
 
     versement.montant = total
