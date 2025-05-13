@@ -1,4 +1,9 @@
 require "active_support/core_ext/integer/time"
+require "tailwindcss/rails"
+Tailwindcss::Rails.configure do |config|
+  config.cli = "npx tailwindcss"
+end
+
 
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
@@ -7,7 +12,7 @@ Rails.application.configure do
   config.enable_reloading = false
 
   # Eager load code on boot for better performance and memory savings (ignored by Rake tasks).
-  config.eager_load = true
+  config.eager_load = false
 
   # Full error reports are disabled.
   config.consider_all_requests_local = false
@@ -20,7 +25,7 @@ Rails.application.configure do
 
   # Enable serving of images, stylesheets, and JavaScripts from an asset server.
   # config.asset_host = "http://assets.example.com"
-
+  config.assets.compile = true
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :local
 

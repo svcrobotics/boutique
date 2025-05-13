@@ -21,9 +21,8 @@
 !/tmp/pids/
 !/tmp/pids/.keep
 
-# Ignore general storage files (e.g., uploaded images), but not the SQLite DB
-/storage/*
-!/storage/.keep
+# Ignore tous les fichiers de logs générés automatiquements, sauf les vrais fichiers de données
+!/storage/**
 
 
 # Ignore temp storage but keep .keep
