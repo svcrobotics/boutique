@@ -1,10 +1,17 @@
 Rails.application.routes.draw do
+  
   get "reassorts/new"
   get "reassorts/create"
   get "especes/index"
   get "especes/new"
   get "especes/create"
+
   root "pages#home"
+
+  resources :avoirs, only: [:index, :show] do
+    post :imprimer, on: :member
+  end
+
   resources :fournisseurs
   resources :factures
 
@@ -22,16 +29,9 @@ Rails.application.routes.draw do
     end
   end
 
-  get "ventes/export", to: "ventes#export_ventes", as: :export_ventes
-  get "ventes/export_interface", to: "ventes#index", as: :export_interface_ventes
+  # get "ventes/export", to: "ventes#export_ventes", as: :export_ventes
+  # get "ventes/export_interface", to: "ventes#index", as: :export_interface_ventes
 
-  resources :ventes do
-    post :recherche_produit, on: :collection
-    post :retirer_produit, on: :collection
-    post :modifier_quantite, on: :collection
-    post :modifier_prix, on: :collection
-    get :imprimer_ticket, on: :member
-  end
 
   resources :clients do
     resources :versements, only: [ :new, :create ]
@@ -43,13 +43,6 @@ Rails.application.routes.draw do
 
   get "stats", to: "stats#index"
 
-  resources :clotures do
-    get :imprimer, on: :member
-    get :preview, on: :member
-    post :cloture_z, on: :collection
-    post :cloture_mensuelle, on: :collection
-    get :refresh_fond_caisse, on: :collection 
-  end
 
   resources :produits do
     member do
@@ -68,10 +61,11 @@ Rails.application.routes.draw do
 
   get "turbo_demo", to: "pages#turbo_demo"
 
-  post "ventes/modifier_remise", to: "ventes#modifier_remise", as: :modifier_remise_ventes
+  # post "ventes/modifier_remise", to: "ventes#modifier_remise", as: :modifier_remise_ventes
 
   resources :especes, only: [:index, :new, :create]
 
+  mount Caisse::Engine => "/caisse"
 
   # get "texte", to: "textes#show", as: :texte
 

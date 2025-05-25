@@ -6,18 +6,18 @@
 <div class="bg-white border p-4 rounded mb-6 text-lg">
   Fond de caisse actuel : <strong><%= number_to_currency(@fond_de_caisse) %></strong>
   <p class="text-sm text-gray-600 mt-1">
-    ℹ️ Ce montant inclut les espèces restantes de la veille. Le fond de caisse est remis à zéro chaque jour dans la clôture.
+    ℹ️ Le fond de caisse est remis à zéro chaque jour dans la clôture.
   </p>
 </div>
 
 <table class="table-auto w-full border mb-6">
   <thead>
     <tr class="bg-gray-100">
-      <th class="px-4 py-2">Date</th>
-      <th class="px-4 py-2">Type</th>
-      <th class="px-4 py-2">Motif</th>
-      <th class="px-4 py-2">Compte</th>
-      <th class="px-4 py-2">Montant</th>
+      <th class="px-4 py-2">Date <span class="inline-block text-gray-400">⇅</span></th>
+      <th class="px-4 py-2">Type <span class="inline-block text-gray-400">⇅</span></th>
+      <th class="px-4 py-2">Motif <span class="inline-block text-gray-400">⇅</span></th>
+      <th class="px-4 py-2">Compte <span class="inline-block text-gray-400">⇅</span></th>
+      <th class="px-4 py-2">Montant <span class="inline-block text-gray-400">⇅</span></th>
     </tr>
   </thead>
   <tbody>
@@ -40,7 +40,45 @@
         <td class="px-4 py-2"><%= number_to_currency(v.montant) %></td>
       </tr>
     <% end %>
+
+    <% Vente.where("espece > 0").where(annulee: [false, nil]).each do |vente| %>
+      <tr class="bg-green-50">
+        <td class="px-4 py-2"><%= vente.date_vente.to_date %></td>
+        <td class="px-4 py-2">Entrée</td>
+        <td class="px-4 py-2">
+          Paiement client<%= " : #{vente.client.nom}" if vente.client.present? %> — Vente n° <%= vente.id %>
+        </td>
+        <td class="px-4 py-2">-</td>
+        <td class="px-4 py-2"><%= number_to_currency(vente.espece) %></td>
+      </tr>
+    <% end %>
+
   </tbody>
 </table>
 
 <%= link_to "➕ Nouveau mouvement", new_espece_path, class: "bg-blue-500 text-white px-4 py-2 rounded" %>
+
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll("th").forEach((header, columnIndex) => {
+      header.style.cursor = "pointer";
+      header.addEventListener("click", () => {
+        const rows = Array.from(header.closest("table").querySelectorAll("tbody tr"));
+        const isAscending = header.classList.toggle("asc");
+
+        rows.sort((a, b) => {
+          const cellA = a.children[columnIndex].innerText.trim();
+          const cellB = b.children[columnIndex].innerText.trim();
+
+          return isAscending
+            ? cellA.localeCompare(cellB, undefined, { numeric: true })
+            : cellB.localeCompare(cellA, undefined, { numeric: true });
+        });
+
+        const tbody = header.closest("table").querySelector("tbody");
+        rows.forEach(row => tbody.appendChild(row));
+      });
+    });
+  });
+</script>

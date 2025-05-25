@@ -4,9 +4,10 @@ class Client < ApplicationRecord
   validates :telephone, uniqueness: true, allow_blank: true
   has_many :produits
   has_many :paiements
-  has_many :ventes, dependent: :nullify
+  has_many :ventes, class_name: "Caisse::Vente", dependent: :nullify
   has_many :versements
-
+  has_many :avoirs
+  
   validates :deposant, inclusion: { in: [ true, false ] }
 
   before_save :capitalize_nom_prenom

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_05_12_091637) do
+ActiveRecord::Schema[8.0].define(version: 2025_05_20_191202) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -37,6 +37,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_12_091637) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "avoirs", force: :cascade do |t|
+    t.integer "vente_id", null: false
+    t.decimal "montant"
+    t.date "date"
+    t.boolean "utilise"
+    t.string "remarques"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "client_id"
+    t.index ["client_id"], name: "index_avoirs_on_client_id"
+    t.index ["vente_id"], name: "index_avoirs_on_vente_id"
   end
 
   create_table "clients", force: :cascade do |t|
@@ -194,10 +207,15 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_12_091637) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.decimal "total", precision: 10, scale: 2
-    t.string "mode_paiement"
     t.integer "versement_id"
     t.decimal "total_brut"
     t.decimal "total_net"
+    t.boolean "annulee"
+    t.string "motif_annulation"
+    t.decimal "espece"
+    t.decimal "cb"
+    t.decimal "cheque"
+    t.decimal "amex"
     t.index ["client_id"], name: "index_ventes_on_client_id"
     t.index ["versement_id"], name: "index_ventes_on_versement_id"
   end
@@ -232,6 +250,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_12_091637) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "avoirs", "clients"
+  add_foreign_key "avoirs", "ventes"
   add_foreign_key "factures", "fournisseurs"
   add_foreign_key "paiements", "clients"
   add_foreign_key "paiements_ventes", "paiements"

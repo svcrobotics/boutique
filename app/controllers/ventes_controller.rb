@@ -2,7 +2,7 @@ class VentesController < ApplicationController
   before_action :set_vente, only: %i[show destroy imprimer_ticket]
 
   def index
-    @ventes = Vente.includes(:client).order(created_at: :desc)
+    @ventes = Vente.includes(:client).order(created_at: :desc).limit(50)
 
     today = Date.current.all_day
     this_month = Date.current.beginning_of_month..Date.current.end_of_month
@@ -17,13 +17,45 @@ class VentesController < ApplicationController
 
   def show
     @vente = Vente.find(params[:id])
+    @avoir_utilise = Avoir.find_by(vente_id: @vente.id, utilise: true)
+    @avoir_emis    = Avoir.find_by(vente_id: @vente.id, utilise: false)
+
+    # Calcul du reste à payer après utilisation de l'avoir (à titre indicatif)
+    @reste = if @avoir_utilise
+      @vente.total_brut - @avoir_utilise.montant
+    else
+      @vente.total_brut
+    end
   end
+
 
   def new
     @vente = Vente.new
     @vente.client = Client.find_by(nom: params[:client_nom]) if params[:client_nom].present?
-    @vente.mode_paiement = "CB" # valeur par défaut
 
+    # Valeurs par défaut des paiements
+    @vente.cb = params[:cb].to_d if params[:cb].present?
+    @vente.espece = params[:espece].to_d if params[:espece].present?
+    @vente.cheque = params[:cheque].to_d if params[:cheque].present?
+    @vente.amex = params[:amex].to_d if params[:amex].present?
+
+    # Calcul total brut depuis la session
+    @total = calculer_total_session
+
+    # Gestion de l'avoir
+    if params[:avoir_id].present?
+      avoir = Avoir.find_by(id: params[:avoir_id])
+      @total_net = (@total - (avoir&.montant || 0)).clamp(0, Float::INFINITY)
+    else
+      @total_net = @total
+    end
+
+    # Liste des avoirs valides
+    @avoirs_valides = Avoir.where(utilise: false)
+                           .where("created_at >= ?", 1.year.ago)
+                           .order(created_at: :desc)
+
+    # Ajout produit via code-barres
     if params[:code_barre].present?
       code = correct_scanner_input(params[:code_barre])
       produit = Produit.find_by(code_barre: code)
@@ -39,13 +71,16 @@ class VentesController < ApplicationController
           "remise" => 0.to_d
         }
         session[:ventes][id]["quantite"] += 1
-        redirect_to new_vente_path and return
+
+        redirect_to new_vente_path(client_nom: params[:client_nom], avoir_id: params[:avoir_id]) and return
       else
         flash[:alert] = "Produit introuvable avec le code-barres : #{params[:code_barre]}"
       end
     end
 
+    # Données pour l’affichage des produits dans la session
     @ventes = session[:ventes] || {}
+
     @quantites = @ventes.to_h.transform_keys(&:to_i).transform_values do |v|
       v.is_a?(Hash) ? v["quantite"].to_i : 1
     end
@@ -57,6 +92,61 @@ class VentesController < ApplicationController
     @produits = Produit.where(id: @quantites.keys).index_by(&:id)
   end
 
+  def annuler
+    @vente = Vente.find(params[:id])
+    @vente.annulee = true
+    @vente.motif_annulation = params[:motif_annulation]
+    @vente.save!
+
+    # Remet tous les produits en stock
+    @vente.ventes_produits.each do |vp|
+      vp.produit.increment!(:stock, vp.quantite)
+    end
+
+    remboursement = params[:remboursement]
+
+    if @vente.mode_paiement == "Espèces" || remboursement == "especes"
+      MouvementEspece.create!(
+        date: Date.today,
+        sens: "sortie",
+        montant: @vente.total_net,
+        motif: "Remboursement vente annulée n°#{@vente.id} — #{params[:motif_annulation]}"
+      )
+    end
+
+    if @vente.mode_paiement == "CB" && params[:remboursement] == "especes"
+      MouvementEspece.create!(
+        date: Date.today,
+        sens: "sortie",
+        montant: @vente.total_net,
+        motif: "Remboursement CB en espèces — vente n°#{@vente.id} — #{params[:motif_annulation]}"
+      )
+    end
+
+    if params[:remboursement] == "aucun" && @vente.client.present?
+      Avoir.create!(
+        client: @vente.client,
+        vente: @vente,
+        montant: @vente.total_net,
+        utilise: false,
+        date: Date.today,
+        remarques: "Annulation de la vente n°#{@vente.id}"
+      )
+    end
+
+    if params[:remboursement] == "avoir"
+      Avoir.create!(
+        client: @vente.client,
+        vente: @vente,
+        montant: @vente.total_net,
+        utilise: false,
+        date: Date.today,
+        remarques: "Annulation de la vente n°#{@vente.id}"
+      )
+    end
+
+    redirect_to ventes_path, notice: "✅ Vente annulée avec succès. Les produits ont été remis en stock."
+  end
 
   def recherche_produit
     code = correct_scanner_input(params[:code_barre])
@@ -88,7 +178,6 @@ class VentesController < ApplicationController
       format.html { redirect_to new_vente_path }
     end
   end
-
 
   def retirer_produit
     session[:ventes]&.delete(params[:produit_id].to_s)
@@ -139,16 +228,9 @@ class VentesController < ApplicationController
 
     client = params[:sans_client] == "1" ? nil : Client.find_by(nom: params[:client_nom])
 
-    @vente = Vente.new(
-      client: client,
-      date_vente: Time.current,
-      mode_paiement: params[:mode_paiement],
-      total_brut: 0,
-      total_net: 0
-    )
-
     total_brut = 0
-    total_net = 0
+    total_net  = 0
+    ventes_produits = []
 
     ventes_data.each do |produit_id_str, infos|
       produit = Produit.find(produit_id_str)
@@ -160,32 +242,93 @@ class VentesController < ApplicationController
       remise_euros = (total_ligne_brut * (remise_pct / 100)).round(2)
       total_ligne_net = total_ligne_brut - remise_euros
 
-      @vente.ventes_produits.build(
+      ventes_produits << {
         produit: produit,
         quantite: quantite,
         prix_unitaire: prix_unitaire,
-        remise: remise_pct # en pourcentage
-      )
+        remise: remise_pct
+      }
 
       total_brut += total_ligne_brut
       total_net  += total_ligne_net
     end
 
-    @vente.total_brut = total_brut.round(2)
-    @vente.total_net  = total_net.round(2)
+    # 🔄 Gestion de l’avoir
+    reste_credit = nil
+    avoir_utilise = nil
+    montant_avoir = 0
+
+    if params[:avoir_id].present?
+      avoir_utilise = Avoir.find_by(id: params[:avoir_id], utilise: false)
+      if avoir_utilise && (avoir_utilise.created_at >= 1.year.ago)
+        montant_avoir = avoir_utilise.montant
+        reste_a_payer = total_net - montant_avoir
+        if reste_a_payer <= 0
+          reste_credit = (montant_avoir - total_net).round(2)
+          total_net = 0
+          flash[:notice] ||= "✅ Vente à 0€ enregistrée via avoir."
+        else
+          total_net = reste_a_payer.round(2)
+        end
+      end
+    end
+
+    montants = {
+      "CB" => params[:cb].to_d,
+      "Espèces" => params[:espece].to_d,
+      "Chèque" => params[:cheque].to_d,
+      "AMEX" => params[:amex].to_d
+    }
+
+    # Ajout du montant de l’avoir utilisé (si présent)
+    montant_avoir ||= 0
+
+    # 💾 Création de la vente
+    @vente = Vente.new(
+      client: client,
+      date_vente: Time.current,
+      total_brut: total_brut.round(2),
+      total_net: total_net.round(2),
+      cb: params[:cb].to_d,
+      espece: params[:espece].to_d,
+      cheque: params[:cheque].to_d,
+      amex: params[:amex].to_d
+    )
+
+    ventes_produits.each { |vp| @vente.ventes_produits.build(vp) }
 
     if @vente.save
       @vente.ventes_produits.each do |vp|
         vp.produit.decrement!(:stock, vp.quantite)
       end
 
+      if avoir_utilise
+        avoir_utilise.update!(utilise: true, vente: @vente)
+      end
+
+      if reste_credit && reste_credit > 0
+        Avoir.create!(
+          client: avoir_utilise.client,
+          vente: @vente,
+          montant: reste_credit,
+          utilise: false,
+          date: Date.today,
+          remarques: "Solde restant de l’avoir n°#{avoir_utilise.id}"
+        )
+      end
+
       session[:ventes] = {}
-      redirect_to ventes_path, notice: "Vente enregistrée avec succès."
+      redirect_to ventes_path, notice: "✅ Vente enregistrée avec succès."
     else
-      redirect_to new_vente_path, alert: "Erreur lors de l'enregistrement de la vente."
+      redirect_to new_vente_path, alert: "❌ Erreur lors de l'enregistrement de la vente."
     end
   end
 
+  def verifier_avoir
+    @avoir = Avoir.find_by(id: params[:avoir_id])
+    @total_vente = calculer_total_session # une méthode que tu vas créer
+    render partial: "infos_avoir"
+  end
 
   def destroy
     @vente = Vente.find(params[:id])
@@ -216,7 +359,8 @@ class VentesController < ApplicationController
       sheet.add_row [
         "Date de vente", "Numéro de la vente", "Nom du produit", "Catégorie", "État",
         "Taux de TVA", "Prix d'achat", "Prix déposant", "Quantité", "Remise (€)", "Total déposant", "Prix vente TTC (net)", "Marge",
-        "Nom de la déposante", "Date de versement", "Reçu", "Mode de paiement cliente", "Mode de versement déposante"
+        "Nom de la déposante", "Date de versement", "Reçu", "Mode de paiement cliente", "Mode de versement déposante", 
+        "Avoir utilisé n°", "Montant avoir utilisé", "Avoir émis n°", "Montant avoir émis"
       ]
 
       ventes.each do |vente|
@@ -262,6 +406,11 @@ class VentesController < ApplicationController
           numero_recu = versement&.numero_recu || "N/A"
           methode_versement = versement&.methode_paiement || "N/A"
 
+          # Gestion des avoirs
+          avoir_utilise = Avoir.find_by(vente_id: vente.id, utilise: true)
+          avoir_emis = Avoir.where(vente_id: vente.id, utilise: false)
+                      .where("remarques LIKE ?", "%Solde restant%").first
+
           sheet.add_row [
             vente.date_vente.strftime("%Y-%m-%d"),
             vente.id,
@@ -280,7 +429,11 @@ class VentesController < ApplicationController
             date_versement,
             numero_recu,
             vente.mode_paiement,
-            methode_versement
+            methode_versement,
+            avoir_utilise&.id || "",
+            (avoir_utilise&.montant ? sprintf("%.2f", avoir_utilise.montant) : ""),
+            avoir_emis&.id || "",
+            (avoir_emis&.montant ? sprintf("%.2f", avoir_emis.montant) : "")
           ]
         end
       end
@@ -290,8 +443,18 @@ class VentesController < ApplicationController
     send_data p.to_stream.read, filename: nom_fichier, type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
   end
 
+private
 
-  private
+  def calculer_total_session
+    ventes_data = session[:ventes] || {}
+    ventes_data.sum do |_, infos|
+      prix = infos["prix"].to_d
+      qte  = infos["quantite"].to_i
+      remise = infos["remise"].to_d
+      total = prix * qte
+      total - (total * remise / 100)
+    end.round(2)
+  end
 
   def set_vente
     @vente = Vente.find(params[:id])
@@ -312,6 +475,7 @@ class VentesController < ApplicationController
 
   def generer_ticket_texte(vente)
     largeur = 42
+    montant_col = 10
     lignes = []
 
     # 🏷️ En-tête boutique
@@ -332,11 +496,7 @@ class VentesController < ApplicationController
     vente.ventes_produits.includes(:produit).each do |vp|
       produit = vp.produit
 
-      tva_str = case produit.etat
-      when "neuf" then "TVA 20%"
-      else "TVA 0%"
-      end
-
+      tva_str = produit.etat == "neuf" ? "TVA 20%" : "TVA 0%"
       ligne_info = "#{produit.categorie.capitalize} - #{produit.etat.capitalize} - #{tva_str}"
       lignes << ligne_info
 
@@ -381,21 +541,56 @@ class VentesController < ApplicationController
     ttc_total = (ttc_0 + ttc_20).round(2)
 
     lignes << "-" * largeur
-    montant_col = 10
     lignes << "Sous-total HT".ljust(largeur - montant_col) + "#{'%.2f €' % ht_total}".rjust(montant_col)
     lignes << "TVA (20%)".ljust(largeur - montant_col) + "#{'%.2f €' % tva_total}".rjust(montant_col)
-    lignes << "Total TTC".ljust(largeur - montant_col) + "#{'%.2f €' % ttc_total}".rjust(montant_col)
-    lignes << "Payé en #{vente.mode_paiement}".ljust(largeur)
     lignes << "-" * largeur
+    lignes << "TOTAL TTC".ljust(largeur - montant_col) + "#{'%.2f €' % ttc_total}".rjust(montant_col)
+    lignes << "-" * largeur
+
+    # Affichage des paiements
+    paiements = []
+    avoir_utilise = Avoir.where(vente_id: vente.id, utilise: true).order(:created_at).first
+    montant_avoir = avoir_utilise&.montant.to_d || 0
+    paiements << ["Avoir utilisé n°#{avoir_utilise.id}", montant_avoir] if montant_avoir > 0
+
+    # ✅ Affichage paiements réels
+    somme_payee = 0
+
+    paiements_simples = {
+      "CB" => vente.cb.to_d,
+      "Espèces" => vente.espece.to_d,
+      "Chèque" => vente.cheque.to_d,
+      "AMEX" => vente.amex.to_d
+    }
+
+    paiements_simples.each do |mode, montant|
+      next if montant.zero?
+
+      lignes << mode.ljust(largeur - montant_col) + "-#{'%.2f €' % montant}".rjust(montant_col)
+      somme_payee += montant
+    end
+
+    # Reste à payer (toujours 0 sauf erreur de caisse)
+    ttc_total = vente.total_net # ou recalcul selon ton besoin
+    reste_a_payer = ttc_total - (somme_payee || 0)
+    reste_a_payer = 0 if reste_a_payer.abs < 0.01
+    lignes << "Reste à payer".ljust(largeur - montant_col) + "#{'%.2f €' % reste_a_payer}".rjust(montant_col)
+    lignes << "-" * largeur
+
+    # 5. Si nouvel avoir émis (avoir utilisé > total TTC)
+    if montant_avoir > ttc_total
+      nouvel_avoir = Avoir.where(vente_id: vente.id, remarques: "Solde restant de l’avoir n°#{avoir_utilise&.id}").first
+      if nouvel_avoir.present?
+        lignes << "Avoir émis n°#{nouvel_avoir.id}".ljust(largeur - montant_col) + "#{'%.2f €' % nouvel_avoir.montant}".rjust(montant_col)
+      end
+    end
 
     lignes << "-" * largeur
     lignes << format("%-10s%-10s%-10s%-10s", "Taux TVA", "TVA", "HT", "TTC")
     lignes << "-" * largeur
-
     lignes << format("%-10s%-10s%-10s%-10s", "0%", "#{sprintf('%.2f €', 0)}", "#{sprintf('%.2f €', ttc_0)}", "#{sprintf('%.2f €', ttc_0)}")
     lignes << format("%-10s%-10s%-10s%-10s", "20%", "#{sprintf('%.2f €', tva_20)}", "#{sprintf('%.2f €', ht_20)}", "#{sprintf('%.2f €', ttc_20)}")
     lignes << "-" * largeur
-
     lignes << format("%-10s%-10s%-10s%-10s", "TOTAL", "#{sprintf('%.2f €', tva_total)}", "#{sprintf('%.2f €', ht_total)}", "#{sprintf('%.2f €', ttc_total)}")
 
     lignes << ""
@@ -408,11 +603,10 @@ class VentesController < ApplicationController
     lignes << "Merci de votre visite".center(largeur)
     lignes << "A bientôt".center(largeur)
     lignes << "VINTAGE ROYAN".center(largeur)
-    lignes << "\n" * 10 # découpe
+    lignes << "\n" * 10
 
     lignes.join("\n")
   end
-
 
   def encode_with_iconv(text)
     tmp_input  = Rails.root.join("tmp", "ticket_utf8.txt")

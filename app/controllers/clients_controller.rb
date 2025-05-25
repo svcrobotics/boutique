@@ -91,20 +91,12 @@ class ClientsController < ApplicationController
 
   def generate_pdf
     @client = Client.find(params[:id])
-    produits = @client.produits.includes(:ventes_produits, :ventes, :produits_versements)
+    produits = @client.produits.includes(:ventes, :produits_versements, produits_versements: :versement)
 
     font_path = Rails.root.join("app/assets/fonts")
+    pdf = Prawn::Document.new(page_size: "A4", margin: [20, 20, 20, 20])
 
-    pdf = Prawn::Document.new(
-      page_size: "A4",
-      margin: [ 20, 20, 20, 20 ]  # [haut, droite, bas, gauche]
-    )
-
-    pdf.font_families.update(
-      "DejaVuSans" => {
-        normal: "#{font_path}/DejaVuSans.ttf"
-      }
-    )
+    pdf.font_families.update("DejaVuSans" => { normal: "#{font_path}/DejaVuSans.ttf" })
     pdf.font "DejaVuSans"
 
     pdf.text "Récapitulatif des Produits en Dépôt", size: 20, align: :center
@@ -115,65 +107,57 @@ class ClientsController < ApplicationController
     pdf.text "Date du jour : #{Date.today.strftime('%d/%m/%Y')}", size: 12
     pdf.move_down 10
 
-    data = [ [ "Article", "Prix demandé", "Statut", "Date de dépôt", "Date de paiement", "Reçu", "Code-barres" ] ]
-
+    data = [["Article", "Prix demandé", "Statut", "Date de dépôt", "Date de paiement", "Reçu", "Code-barres"]]
     total_verse = 0.0
     total_lignes = 0
 
     produits.each do |produit|
-      code_barre = produit.code_barre || "N/A"
       total_deposes = produit.stock || 1
+      nb_vendus     = produit.ventes.count
+      nb_payes      = produit.produits_versements.count
+      code_barre    = produit.code_barre || "N/A"
+      date_depot    = produit.date_depot&.strftime("%d/%m/%Y") || "N/A"
 
-      ventes = produit.ventes_produits.includes(:vente).map do |vp|
-        vente = vp.vente
-        next unless vente
-        {
-          quantite: vp.quantite || 1,
-          vente: vente
-        }
-      end.compact
+      payes     = [nb_payes, total_deposes].min
+      non_payes = [nb_vendus - nb_payes, 0].max
+      restants  = [total_deposes - nb_vendus, 0].max
 
-      total_vendus = ventes.sum { |v| v[:quantite] }
-      restants = total_deposes - total_vendus
-
-      ventes.each do |entry|
-        entry[:quantite].times do
-          vente = entry[:vente]
-
-          produit_versement = produit.produits_versements.find_by(vente_id: vente.id)
-          versement = produit_versement&.versement
-
-          if versement.present?
-            statut = "✔️ Vendu et payé"
-            date_versement = versement.created_at&.strftime("%d/%m/%Y") || "N/A"
-            numero_recu = versement.numero_recu.presence || "N/A"
-            total_verse += produit.prix_deposant.to_f
-            total_lignes += 1
-          else
-            statut = "✔️ Vendu (non payé)"
-            date_versement = "N/A"
-            numero_recu = "N/A"
-          end
-
-          data << [
-            produit.nom,
-            "#{produit.prix_deposant} €",
-            statut,
-            produit.date_depot&.strftime("%d/%m/%Y") || "N/A",
-            date_versement,
-            numero_recu,
-            code_barre
-          ]
-        end
+      # ✔️ Vendu et payé
+      payes.times do
+        versement = produit.produits_versements.first&.versement
+        data << [
+          produit.nom,
+          "#{produit.prix_deposant} €",
+          "✔️ Vendu et payé",
+          date_depot,
+          versement&.created_at&.strftime("%d/%m/%Y") || "N/A",
+          versement&.numero_recu || "N/A",
+          code_barre
+        ]
+        total_verse += produit.prix_deposant.to_f
+        total_lignes += 1
       end
 
-      # Lignes pour les exemplaires non vendus
+      # ✔️ Vendu (non payé)
+      non_payes.times do
+        data << [
+          produit.nom,
+          "#{produit.prix_deposant} €",
+          "✔️ Vendu (non payé)",
+          date_depot,
+          "N/A",
+          "N/A",
+          code_barre
+        ]
+      end
+
+      # ❌ Non vendu
       restants.times do
         data << [
           produit.nom,
           "#{produit.prix_deposant} €",
           "❌ Non vendu",
-          produit.date_depot&.strftime("%d/%m/%Y") || "N/A",
+          date_depot,
           "N/A",
           "N/A",
           code_barre
@@ -182,13 +166,13 @@ class ClientsController < ApplicationController
     end
 
     column_widths = {
-      0 => 100,   # Article
-      1 => 55,   # Prix demandé
-      2 => 110,   # Statut
-      3 => 65,   # Date de dépôt
-      4 => 65,   # Date de paiement
-      5 => 110,  # Reçu
-      6 => 50    # Code-barres
+      0 => 100,
+      1 => 55,
+      2 => 110,
+      3 => 65,
+      4 => 65,
+      5 => 110,
+      6 => 50
     }
 
     pdf.table(data, header: true, column_widths: column_widths, cell_style: { size: 9 }) do
@@ -197,12 +181,14 @@ class ClientsController < ApplicationController
       row(0).font_style = :normal
     end
 
-
     pdf.move_down 20
     pdf.text "Total des ventes réglées : #{total_lignes} article(s)", size: 12
     pdf.text "Total versé à la cliente : #{sprintf('%.2f', total_verse)} €", size: 12
 
-    send_data pdf.render, filename: "recapitulatif_produits_#{@client.id}.pdf", type: "application/pdf", disposition: "inline"
+    send_data pdf.render,
+      filename: "recapitulatif_produits_#{@client.id}.pdf",
+      type: "application/pdf",
+      disposition: "inline"
   end
 
 

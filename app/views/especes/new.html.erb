@@ -6,6 +6,7 @@
     <%= select_tag :type_operation,
       options_for_select([
         ["➕ J'ai retirer des especes sur mon compte", "apport"],
+        ["➕ J'ai ajouter des especes de mon portefeuille", "apport_perso"],
         ["➖ J'ai retirer des espéces de la caisse pour mon usage perso", "retrait_perso"],
         ["➖ J'ai déposer des espéces sur mon compte", "depot_compte"]
       ]),

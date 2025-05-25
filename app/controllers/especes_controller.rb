@@ -2,17 +2,19 @@
 class EspecesController < ApplicationController
   def index
     jour = Time.zone.today
-    
+
     @mouvements = MouvementEspece.order(date: :desc)
-    @versements = Versement.where(methode_paiement: "Espèces")
+    @versements = Versement.where(methode_paiement: "Espèces") # tous les versements affichés
 
-    total_entrees = MouvementEspece.where(sens: "entrée").sum(:montant)
-    total_sorties = MouvementEspece.where(sens: "sortie").sum(:montant)
-    total_versements = @versements.sum(:montant)
+    fond_initial = 0
 
-    @fond_de_caisse = total_entrees - total_sorties - total_versements
+    total_entrees = MouvementEspece.where(date: jour, sens: "entrée").sum(:montant)
+    total_sorties = MouvementEspece.where(date: jour, sens: "sortie").sum(:montant)
+    total_versements_jour = Versement.where(methode_paiement: "Espèces", created_at: jour.all_day).sum(:montant)
+    total_ventes_especes = Vente.where(created_at: jour.all_day, annulee: [false, nil]).sum(:espece)
+
+    @fond_de_caisse = fond_initial + total_entrees - total_sorties - total_versements_jour + total_ventes_especes
   end
-
 
   def new
     @mouvement = MouvementEspece.new
@@ -28,6 +30,9 @@ class EspecesController < ApplicationController
     when "apport"
       sens = "entrée"
       motif = "Apport banque"
+    when "apport_perso"
+      sens = "entrée"
+      motif = "Apport perso"
     when "retrait_perso"
       sens = "sortie"
       motif = "Retrait perso"

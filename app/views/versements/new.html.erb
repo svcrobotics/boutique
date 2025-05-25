@@ -30,6 +30,20 @@
         <% end %>
       <% end %>
     </tbody>
+    <tfoot>
+      <tr class="bg-gray-100 font-bold">
+        <td colspan="3" class="text-right px-4 py-2">Total à verser :</td>
+        <td class="text-right px-4 py-2">
+          <% total = 0 %>
+          <% @produits_a_payer.each do |produit, lignes| %>
+            <% lignes.each do |ligne| %>
+              <% total += produit.prix_deposant * ligne[:quantite] %>
+            <% end %>
+          <% end %>
+          <%= number_to_currency(total) %>
+        </td>
+      </tr>
+    </tfoot>
   </table>
 
   <div class="mb-4">

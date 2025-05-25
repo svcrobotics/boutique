@@ -14,7 +14,7 @@ class VersementsController < ApplicationController
     @client.produits.includes(:ventes).each do |produit|
       next unless produit.en_depot?
 
-      produit.ventes.each do |vente|
+      produit.ventes.where(annulee: [false, nil]).each do |vente|
         vp = vente.ventes_produits.find_by(produit_id: produit.id)
         next unless vp
 
@@ -81,7 +81,7 @@ class VersementsController < ApplicationController
     end
 
     versement.montant = total
-    versement.ventes = Vente.where(id: ventes_ids.uniq)
+    versement.ventes = Caisse::Vente.where(id: ventes_ids.uniq)
 
     if versement.save
       imprimer_versement(versement)

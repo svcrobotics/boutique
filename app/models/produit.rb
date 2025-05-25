@@ -8,7 +8,7 @@ class Produit < ApplicationRecord
   belongs_to :client, optional: true
 
   has_many :ventes_produits
-  has_many :ventes, through: :ventes_produits
+  has_many :ventes, class_name: "Caisse::Vente", through: :ventes_produits
   has_many :versements
   has_many :produits_versements
   has_many :versements, through: :produits_versements
@@ -56,6 +56,10 @@ class Produit < ApplicationRecord
     en_promo? && prix_promo.present? ? prix_promo : prix
   end
 
+  def vendu?
+    ventes.where(annulee: [false, nil]).any?
+  end
+  
   ### === MÉTHODES PRIVÉES ===
 
   private

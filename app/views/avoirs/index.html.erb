@@ -1,0 +1,36 @@
+<h1 class="text-xl font-bold mb-4">📄 Avoirs disponibles</h1>
+
+<table class="table-auto w-full border mb-6">
+  <thead>
+    <tr class="bg-gray-100">
+      <th class="px-4 py-2">N°</th>
+      <th class="px-4 py-2">Date</th>
+      <th class="px-4 py-2">Client</th>
+      <th class="px-4 py-2">Montant</th>
+      <th class="px-4 py-2">Utilisé</th>
+      <th class="px-4 py-2">Vente d’origine</th>
+      <th class="px-4 py-2">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @avoirs.order(created_at: :desc).each do |avoir| %>
+      <tr class="<%= 'bg-gray-100' if avoir.utilise %>">
+        <td class="px-4 py-2 font-mono">#<%= avoir.id %></td>
+        <td class="px-4 py-2"><%= l(avoir.created_at.to_date) %></td>
+        <td class="px-4 py-2"><%= avoir.client&.nom || "–" %></td>
+        <td class="px-4 py-2"><%= number_to_currency(avoir.montant) %></td>
+        <td class="px-4 py-2"><%= avoir.utilise ? "✅ Oui" : "❌ Non" %></td>
+        <td class="px-4 py-2">
+          <% if avoir.vente_id.present? %>
+            <%= link_to "N°#{avoir.vente_id}", caisse.vente_path(avoir.vente_id), class: "text-blue-600 underline" %>
+          <% else %>
+            –
+          <% end %>
+        </td>
+        <td class="px-4 py-2">
+          <%= button_to "🖨️ Imprimer", imprimer_avoir_path(avoir), method: :post, class: "bg-gray-200 px-3 py-1 rounded" %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

@@ -2,7 +2,9 @@ module VersementsAFaireHelper
   def self.call
     lignes_deja_payees = ProduitsVersement.group(:produit_id, :vente_id).sum(:quantite)
 
-    ventes = Vente.includes(ventes_produits: { produit: :client }).order(created_at: :desc)
+    ventes = Vente.includes(ventes_produits: { produit: :client })
+              .where(annulee: [false, nil])    # <-- AJOUT ce filtre !
+              .order(created_at: :desc)
 
     paiements_groupes = Hash.new { |h, k| h[k] = [] }
 

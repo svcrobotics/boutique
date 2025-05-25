@@ -1,11 +1,25 @@
 <div class="max-w-3xl mx-auto bg-white shadow rounded p-6">
   <h1 class="text-2xl font-semibold mb-6">🛒 Encaissement</h1>
 
+  <!-- 🔄 FORMULAIRE GET : Sélection de l'AVOIR -->
+  <%= form_with url: new_vente_path, method: :get, local: true do %>
+    <%= hidden_field_tag :client_nom, params[:client_nom] %>
+    <div class="mb-4">
+      <label for="avoir_id" class="block font-medium mb-1">💳 Avoir à utiliser</label>
+      <%= select_tag :avoir_id,
+        options_for_select([["-- Aucun avoir --", ""]] + @avoirs_valides.map { |a|
+          ["N°#{a.id.to_s.rjust(6, "0")} — #{number_to_currency(a.montant)} — #{l(a.created_at.to_date)}", a.id]
+        }, selected: params[:avoir_id]),
+        class: "w-full mb-4 p-2 border border-gray-400 rounded-lg bg-gray-50",
+        onchange: "this.form.submit();" %>
+    </div>
+  <% end %>
+
   <!-- FORMULAIRE CODE-BARRES -->
   <%= form_with url: recherche_produit_ventes_path, method: :post, local: true do |f| %>
     <div class="mb-4">
       <%= f.label :code_barre, "Code-barres" %>
-      <%= f.text_field :code_barre, autofocus: true, autocomplete: "off", class: "w-full rounded border-gray-300" %>
+      <%= f.text_field :code_barre, autofocus: true, autocomplete: "off", class: "w-full mb-4 p-2 border border-gray-400 rounded-lg bg-gray-50" %>
     </div>
   <% end %>
 
@@ -31,11 +45,9 @@
           <% remise = valeur.is_a?(Hash) ? valeur["remise"].to_d : 0.to_d %>
           <% total_produit = (prix_unitaire * quantite * (1 - remise / 100)).round(2) %>
           <% total += total_produit %>
-
           <tr class="border-t">
             <td class="px-4 py-2 text-center"><%= produit.nom %></td>
             <td class="px-4 py-2 text-center"><%= quantite %></td>
-            
             <td class="px-4 py-2 text-center whitespace-nowrap">
               <% if produit.en_promo? && produit.prix_promo.present? %>
                 <span class="relative inline-block text-base text-gray-500 font-medium">
@@ -47,20 +59,16 @@
                 <%= number_to_currency(produit.prix) %>
               <% end %>
             </td>
-
             <td class="px-4 py-2 text-center">
               <%= form_with url: modifier_remise_ventes_path, method: :post, local: true do %>
                 <%= hidden_field_tag :produit_id, produit.id %>
-
                 <%= select_tag :remise,
                   options_for_select((0..70).step(10).map { |v| ["#{v} %", v] }, selected: remise.to_i),
                   class: "w-24 border rounded text-right",
                   onchange: "this.form.submit();" %>
               <% end %>
             </td>
-
             <td class="px-4 py-2 text-center"><%= number_to_currency(total_produit) %></td>
-
             <td class="px-4 py-2 text-center text-sm text-gray-500">
               Stock : <%= produit.stock %>
             </td>
@@ -69,10 +77,9 @@
             </td>
           </tr>
         <% end %>
-
         <tr class="border-t font-semibold">
           <td colspan="3" class="px-4 py-2 text-right">Total :</td>
-          <td colspan="3" class="px-4 py-2 text-right"><%= number_to_currency(total) %></td>
+          <td colspan="3" class="px-4 py-2 text-right"><%= number_to_currency(@total_net) %></td>
         </tr>
       </tbody>
     </table>
@@ -82,39 +89,95 @@
 
   <!-- FORMULAIRE ENCAISSEMENT -->
   <%= form_with url: ventes_path, method: :post, local: true do %>
+    <%= hidden_field_tag :avoir_id, params[:avoir_id] %>
     <div class="mb-4">
       <label class="block font-medium text-gray-700 mb-1">Client</label>
       <div class="flex items-center gap-2">
         <%= text_field_tag :client_nom, params[:client_nom], list: "clients_list",
               class: "flex-1 rounded border border-gray-300 shadow-sm px-2 py-1",
               placeholder: "Nom du client (ou vide pour sans client)" %>
-
         <%= link_to "➕ Nouveau client", new_client_path(retour: "ventes"),
               data: { turbo_frame: "client_form" },
               class: "whitespace-nowrap px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" %>
       </div>
-
       <datalist id="clients_list">
         <% Client.order(:nom).pluck(:nom).uniq.each do |nom| %>
           <option value="<%= nom %>">
         <% end %>
       </datalist>
     </div>
+    
+    <% if params[:avoir_id].present? && (avoir = Avoir.find_by(id: params[:avoir_id])) %>
+      <% reste = total - avoir.montant %>
+      <div class="bg-yellow-100 text-yellow-900 px-4 py-2 rounded mb-4">
+        Avoir utilisé : <strong><%= number_to_currency(avoir.montant) %></strong><br>
+        <% if reste <= 0 %>
+          ✅ Le total est couvert par l’avoir. Un nouvel avoir sera émis pour un montant de <strong><%= number_to_currency(-reste) %></strong>.
+        <% else %>
+          💳 Reste à payer après avoir : <strong><%= number_to_currency(reste) %></strong>
+        <% end %>
+      </div>
+    <% end %>
 
     <div class="mb-4">
-      <label class="block font-medium text-gray-700">Mode de paiement</label>
-      <%= select_tag :mode_paiement,
-            options_for_select(["CB", "Espèces", "AMEX", "Chèque"], params[:mode_paiement] || "CB"),
-            class: "w-full rounded border-gray-300 shadow-sm" %>
+      <label class="block font-medium text-gray-700 mb-2">💳 Paiements</label>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div>
+          <label for="cb" class="block text-sm">CB</label>
+          <%= number_field_tag :cb, params[:cb], step: 0.01, min: 0, class: "w-full p-2 border rounded", oninput: "majResteAPayer()" %>
+        </div>
+        <div>
+          <label for="espece" class="block text-sm">Espèces</label>
+          <%= number_field_tag :espece, params[:espece], step: 0.01, min: 0, class: "w-full p-2 border rounded", oninput: "majResteAPayer()" %>
+        </div>
+        <div>
+          <label for="cheque" class="block text-sm">Chèque</label>
+          <%= number_field_tag :cheque, params[:cheque], step: 0.01, min: 0, class: "w-full p-2 border rounded", oninput: "majResteAPayer()" %>
+        </div>
+        <div>
+          <label for="amex" class="block text-sm">AMEX</label>
+          <%= number_field_tag :amex, params[:amex], step: 0.01, min: 0, class: "w-full p-2 border rounded", oninput: "majResteAPayer()" %>
+        </div>
+      </div>
     </div>
+    <div class="text-right mt-2 font-semibold">
+      Reste à payer : <span id="reste-a-payer"><%= number_to_currency(@total_net) %></span>
+    </div>
+    
+    <script>
+      function majResteAPayer() {
+        let total = <%= @total_net || 0 %>;
 
-    <div class="text-right">
+        <% if params[:avoir_id].present? && (avoir = Avoir.find_by(id: params[:avoir_id])) %>
+          total -= <%= avoir.montant %>;
+        <% end %>
+
+        // Parse des champs de paiement
+        let cb     = parseFloat(document.getElementById("cb").value)     || 0;
+        let espece = parseFloat(document.getElementById("espece").value) || 0;
+        let cheque = parseFloat(document.getElementById("cheque").value) || 0;
+        let amex   = parseFloat(document.getElementById("amex").value)   || 0;
+        let avoir  = parseFloat(document.getElementById("avoir")?.value) || 0;
+
+        let total_paye = cb + espece + cheque + amex + avoir;
+        let reste = total - total_paye;
+        if (Math.abs(reste) < 0.01) reste = 0;
+
+        const resteElement = document.getElementById("reste-a-payer");
+        if (resteElement) {
+          resteElement.textContent = reste.toLocaleString("fr-FR", {
+            style: "currency",
+            currency: "EUR"
+          });
+        }
+      }
+    </script>
+
+    <div class="text-right mt-6">
       <button type="submit"
         class="w-full bg-green-600 text-white font-semibold text-lg py-3 rounded hover:bg-green-700">
         💳 Encaisser maintenant
       </button>
     </div>
   <% end %>
-
-  <%= turbo_frame_tag "client_form" %>
 </div>

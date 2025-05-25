@@ -2,7 +2,7 @@
 class Paiement < ApplicationRecord
   belongs_to :client
   has_many :paiements_ventes
-  has_many :ventes, through: :paiements_ventes
+  has_many :ventes, class_name: "Caisse::Vente", through: :paiements_ventes
 
   validates :numero_recu, presence: true, uniqueness: true
   before_validation :generer_numero_recu, on: :create

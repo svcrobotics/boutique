@@ -44,7 +44,13 @@
             </p>
             <p class="text-sm text-gray-600">
               Client : <%= vente.client&.nom || "Sans client" %> — 
-              Paiement : <%= vente.mode_paiement || "N/A" %> — 
+              Paiement :
+              <%= [
+                ("CB: #{number_to_currency(vente.cb)}" if vente.cb.to_f > 0),
+                ("Espèces: #{number_to_currency(vente.espece)}" if vente.espece.to_f > 0),
+                ("Chèque: #{number_to_currency(vente.cheque)}" if vente.cheque.to_f > 0),
+                ("AMEX: #{number_to_currency(vente.amex)}" if vente.amex.to_f > 0)
+              ].compact.join(" · ").html_safe %> — 
               Total : <strong><%= number_to_currency(vente.total_net) %></strong>
             </p>
           </div>
@@ -56,10 +62,31 @@
             <%= link_to "🖨️ Imprimer ticket", imprimer_ticket_vente_path(vente), method: :post,
             class: "bg-gray-100 hover:bg-gray-200 text-black px-4 py-2 rounded" %>
 
+            <% unless vente.annulee? %>
+              <details class="mb-4">
+                <summary class="cursor-pointer text-red-600 font-bold">❌ Annuler la vente</summary>
+                <div class="mt-2 border rounded p-4 bg-red-50">
+                  <%= form_with url: annuler_vente_path(vente), method: :patch, local: true do |f| %>
+                    <div class="mb-3">
+                      <%= f.label :motif_annulation, "Motif de l'annulation", class: "block text-sm font-medium" %>
+                      <%= f.text_area :motif_annulation, rows: 3, class: "w-full border rounded p-2" %>
+                    </div>
 
-            <%= button_to "🗑 Supprimer", vente_path(vente), method: :delete,
-              data: { turbo_confirm: "Supprimer cette vente ?" },
-              class: "bg-red-100 hover:bg-red-200 text-red-800 px-4 py-2 rounded" %>
+                    <% if vente.espece.to_f == 0 %>
+                      <div class="mb-3">
+                        <%= label_tag :remboursement, "Type de remboursement", class: "block text-sm font-medium" %>
+                        <%= select_tag :remboursement, options_for_select([["Aucun", "aucun"], ["Espèces", "especes"], ["CB (Sur le TPE)", "cb"], ["Avoir", "avoir"]]), class: "w-full border rounded p-2" %>
+                      </div>
+                    <% end %>
+
+                    <%= f.submit "Confirmer l'annulation", class: "bg-red-600 text-white px-4 py-2 rounded" %>
+                  <% end %>
+                </div>
+              </details>
+            <% else %>
+              <p class="text-red-500 font-bold">Vente annulée.</p>
+              <p class="text-sm text-gray-600">Motif : <%= vente.motif_annulation %></p>
+            <% end %>
           </div>
         </div>
       <% end %>

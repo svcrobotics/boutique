@@ -102,3 +102,5 @@ gem "caxlsx_rails"
 gem "whenever", require: false
 
 gem "rdoc"
+
+gem "caisse", path: "/home/victor/caisse"

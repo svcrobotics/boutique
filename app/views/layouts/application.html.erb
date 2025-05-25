@@ -44,28 +44,31 @@
         
         <select id="menu" class="p-2 bg-gray-200 text-black rounded-md shadow-sm">
           <option value="" selected disabled>📌 Sélectionner une section</option>
-          <option value="<%= root_path %>">🏠 Accueil</option>
+          <option value="<%= main_app.root_path %>">🏠 Accueil</option>
           <optgroup label="🛠 Gestion">
-            <option value="<%= fournisseurs_path %>">🏢 Fournisseurs</option>
-            <option value="<%= factures_path %>">📄 Factures</option>
-            <option value="<%= clients_path %>">👥 Clients</option>
-            <option value="<%= produits_path %>">📦 Produits</option>
+            <option value="<%= main_app.fournisseurs_path %>">🏢 Fournisseurs</option>
+            <option value="<%= main_app.factures_path %>">📄 Factures</option>
+            <option value="<%= main_app.clients_path %>">👥 Clients</option>
+            <option value="<%= main_app.produits_path %>">📦 Produits</option>
           </optgroup>
           <optgroup label="💰 Caisse">
-            <option value="<%= ventes_path %>">🛒 Ventes</option>
-            <option value="<%= clotures_path %>">🔐 Clôtures</option>
+            <option value="<%= caisse.ventes_path %>">🛒 Ventes</option>
+            <option value="<%= caisse.clotures_path %>">🔐 Clôtures</option>
+          </optgroup>
+          <optgroup label="🎟 Avoirs">
+            <option value="<%= main_app.avoirs_path %>">📄 Avoirs</option>
           </optgroup>
           <optgroup label="💶 Espèces">
-            <option value="<%= especes_path %>">📋 Mouvements</option>
+            <option value="<%= main_app.especes_path %>">📋 Mouvements</option>
           </optgroup>
           <optgroup label="💰 Comptable">
-            <option value="<%= export_interface_ventes_path %>">📦 Export Ventes</option>
+            <option value="<%= caisse.ventes_path %>">📦 Export Ventes</option>
           </optgroup>
           <optgroup label="💰 Statistique">
-            <option value="<%= stats_path %>">📄 Stats</option>
+            <option value="<%= main_app.stats_path %>">📄 Stats</option>
           </optgroup>
           <optgroup label="📦 Dépot-Vente">
-            <option value="<%= paiements_path %>">💰 Paiements</option>
+            <option value="<%= main_app.paiements_path %>">💰 Paiements</option>
           </optgroup>
         </select>
       </form>

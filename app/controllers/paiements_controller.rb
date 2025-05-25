@@ -100,7 +100,7 @@ class PaiementsController < ApplicationController
     paiements_groupes = Hash.new { |h, k| h[k] = [] }
 
     # Parcourt toutes les ventes dans l’ordre
-    Vente.includes(ventes_produits: { produit: :client }).order(created_at: :asc).each do |vente|
+    Vente.includes(ventes_produits: { produit: :client }).where(annulee: [false, nil]).order(created_at: :asc).each do |vente|
       vente.ventes_produits.each do |vp|
         produit = vp.produit
         client  = produit.client
@@ -132,8 +132,6 @@ class PaiementsController < ApplicationController
       }
     end
   end
-
-
 
   def generer_recu_texte(paiement)
     largeur = 42

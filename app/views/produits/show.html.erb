@@ -21,7 +21,19 @@
       <p class="text-gray-600"><strong>Catégorie :</strong> <%= @produit.categorie %></p>
       <p class="text-gray-600"><strong>État :</strong> <%= @produit.etat.humanize %></p>
       <p class="text-gray-600"><strong>Stock :</strong> <%= @produit.stock > 0 ? @produit.stock : "Rupture" %></p>
-      <p class="text-gray-600"><strong>Prix de vente :</strong> <%= number_to_currency(@produit.prix, unit: "€") %></p>
+      <p class="text-gray-600"><strong>Prix de vente :</strong>
+                <% if @produit.en_promo? && @produit.prix_promo.present? %>
+                  <span class="relative inline-block text-base text-gray-600 font-medium">
+                    <span class="inline-block"><%= number_to_currency(@produit.prix) %></span>
+                    <span style="position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background-color: red; transform: rotate(-15deg); transform-origin: left center;"></span>
+                  </span>
+                  <span class="ml-2 text-red-600 font-bold text-xl">
+                    <%= number_to_currency(@produit.prix_promo) %>
+                  </span>
+                <% else %>
+                  <%= number_to_currency(@produit.prix) %>
+                <% end %>
+      </p>
     </div>
 
     <!-- 📌 Affichage conditionnel selon l'état du produit -->
