@@ -43,7 +43,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_20_191202) do
     t.integer "vente_id", null: false
     t.decimal "montant"
     t.date "date"
-    t.boolean "utilise"
+    t.boolean "utilise", default: false
     t.string "remarques"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false

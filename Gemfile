@@ -103,4 +103,4 @@ gem "whenever", require: false
 
 gem "rdoc"
 
-gem "caisse", path: "/home/victor/caisse"
+gem "caisse", git: 'https://github.com/svcrobotics/caisse.git'
