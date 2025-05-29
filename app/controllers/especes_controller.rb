@@ -11,7 +11,7 @@ class EspecesController < ApplicationController
     total_entrees = MouvementEspece.where(date: jour, sens: "entrée").sum(:montant)
     total_sorties = MouvementEspece.where(date: jour, sens: "sortie").sum(:montant)
     total_versements_jour = Versement.where(methode_paiement: "Espèces", created_at: jour.all_day).sum(:montant)
-    total_ventes_especes = Vente.where(created_at: jour.all_day, annulee: [false, nil]).sum(:espece)
+    total_ventes_especes = Caisse::Vente.where(created_at: jour.all_day, annulee: [false, nil]).sum(:espece)
 
     @fond_de_caisse = fond_initial + total_entrees - total_sorties - total_versements_jour + total_ventes_especes
   end
@@ -21,6 +21,48 @@ class EspecesController < ApplicationController
   end
 
   def create
+    if params[:vente_id].present?
+      # 🔁 Création auto liée à une vente (rendu monnaie / encaissement espèces)
+      vente = Caisse::Vente.find_by(id: params[:vente_id])
+
+      if vente
+        montant_espece = vente.espece.to_d
+        total_net = vente.total_net.to_d
+        total_regle = vente.cb.to_d + vente.cheque.to_d + vente.amex.to_d + montant_espece
+        reste = total_net - total_regle
+
+        # Apport espèces
+        if montant_espece > 0
+          MouvementEspece.create!(
+            sens: "entrée",
+            motif: "Encaissement espèces vente n°#{vente.id}",
+            montant: montant_espece,
+            date: vente.date_vente,
+            vente: vente
+          )
+        end
+
+        # Rendu monnaie
+        rendu = montant_espece - reste
+        if rendu > 0
+          MouvementEspece.create!(
+            sens: "sortie",
+            motif: "Rendu monnaie vente n°#{vente.id}",
+            montant: -rendu,
+            date: vente.date_vente,
+            vente: vente
+          )
+        end
+
+        redirect_to especes_path, notice: "Mouvements espèces enregistrés pour la vente n°#{vente.id}."
+        return
+      else
+        redirect_to especes_path, alert: "Vente introuvable."
+        return
+      end
+    end
+
+    # 🧾 Saisie manuelle
     type = params[:type_operation]
     montant = params[:montant].to_d
     date = params[:date]
@@ -57,6 +99,7 @@ class EspecesController < ApplicationController
       render :new, status: :unprocessable_entity
     end
   end
+
 
 
 

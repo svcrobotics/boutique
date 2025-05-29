@@ -1,6 +1,5 @@
-GIT
-  remote: https://github.com/svcrobotics/caisse.git
-  revision: 26e6103adc0137f880858ee22264f3406da12b57
+PATH
+  remote: /home/victor/caisse
   specs:
     caisse (0.1.0)
 

@@ -49,7 +49,7 @@ class ClientsController < ApplicationController
 
     if @client.save
       if @retour == "ventes"
-        redirect_to new_vente_path(client_nom: @client.nom), notice: "Client créée avec succès."
+        redirect_to caisse.new_vente_path(client_nom: @client.nom), notice: "Client créée avec succès."
       else
         redirect_to clients_path, notice: "Client ajoutée."
       end

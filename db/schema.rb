@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_05_20_191202) do
+ActiveRecord::Schema[8.0].define(version: 2025_05_26_124544) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -216,6 +216,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_20_191202) do
     t.decimal "cb"
     t.decimal "cheque"
     t.decimal "amex"
+    t.decimal "remise_globale"
     t.index ["client_id"], name: "index_ventes_on_client_id"
     t.index ["versement_id"], name: "index_ventes_on_versement_id"
   end

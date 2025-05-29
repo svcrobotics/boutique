@@ -6,7 +6,7 @@ class StatsController < ApplicationController
     beginning_of_month = today.beginning_of_month
     end_of_month = today.end_of_month
 
-    ventes = Vente.includes(ventes_produits: :produit, client: {})
+    ventes = Caisse::Vente.includes(ventes_produits: :produit, client: {})
     ventes_today = ventes.where(date_vente: today.all_day)
     ventes_month = ventes.where(date_vente: beginning_of_month..end_of_month)
 

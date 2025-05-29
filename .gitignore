@@ -22,8 +22,8 @@
 !/tmp/pids/.keep
 
 # Ignore tous les fichiers de logs générés automatiquements, sauf les vrais fichiers de données
-!/storage/**
 
+/storage/*.sqlite3
 
 # Ignore temp storage but keep .keep
 /tmp/storage/*
