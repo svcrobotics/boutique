@@ -38,4 +38,4 @@
 /app/assets/builds/*
 !/app/assets/builds/.keep
 
-/public/doc
+/public/docstorage/
