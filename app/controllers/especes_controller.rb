@@ -1,10 +1,11 @@
-# app/controllers/especes_controller.rb
 class EspecesController < ApplicationController
   def index
     jour = Time.zone.today
 
-    @mouvements = MouvementEspece.order(date: :desc)
-    @versements = Versement.where(methode_paiement: "Espèces") # tous les versements affichés
+    @mouvements = MouvementEspece
+                  .select("mouvement_especes.*, CASE WHEN sens = 'entrée' THEN 0 ELSE 1 END AS ordre_sens")
+                  .order("date DESC, ordre_sens ASC, created_at DESC")
+    @versements = Versement.where(methode_paiement: "Espèces")
 
     fond_initial = 0
 
@@ -13,7 +14,7 @@ class EspecesController < ApplicationController
     total_versements_jour = Versement.where(methode_paiement: "Espèces", created_at: jour.all_day).sum(:montant)
     total_ventes_especes = Caisse::Vente.where(created_at: jour.all_day, annulee: [false, nil]).sum(:espece)
 
-    @fond_de_caisse = fond_initial + total_entrees - total_sorties - total_versements_jour + total_ventes_especes
+    @fond_de_caisse = fond_initial + total_entrees - total_sorties - total_versements_jour
   end
 
   def new
@@ -21,76 +22,88 @@ class EspecesController < ApplicationController
   end
 
   def create
+    # Si on a un param :vente_id, on veut enregistrer automatiquement
+    # l’entrée (et le rendu) pour cette vente. Mais on doit vérifier que
+    # l’entrée n’existe pas déjà, sinon on duplique.
     if params[:vente_id].present?
-      # 🔁 Création auto liée à une vente (rendu monnaie / encaissement espèces)
       vente = Caisse::Vente.find_by(id: params[:vente_id])
 
       if vente
         montant_espece = vente.espece.to_d
-        total_net = vente.total_net.to_d
-        total_regle = vente.cb.to_d + vente.cheque.to_d + vente.amex.to_d + montant_espece
-        reste = total_net - total_regle
+        total_net      = vente.total_net.to_d
+        total_regle    = vente.cb.to_d + vente.cheque.to_d + vente.amex.to_d + montant_espece
+        reste          = total_net - total_regle
 
-        # Apport espèces
+        # —— ENREGISTREMENT DE L’ENTRÉE (si pas déjà existante) ——
         if montant_espece > 0
-          MouvementEspece.create!(
-            sens: "entrée",
-            motif: "Encaissement espèces vente n°#{vente.id}",
-            montant: montant_espece,
-            date: vente.date_vente,
-            vente: vente
-          )
+          motif_entree = "Encaissement espèces vente n°#{vente.id}"
+
+          unless MouvementEspece.exists?(sens: "entrée", motif: motif_entree, vente_id: vente.id)
+            MouvementEspece.create!(
+              sens:    "entrée",
+              motif:   motif_entree,
+              montant: montant_espece,
+              date:    vente.date_vente,
+              vente:   vente
+            )
+          end
         end
 
-        # Rendu monnaie
+        # —— ENREGISTREMENT DU RENDU (sortie) ——
+        # On calcule le rendu : si e - (net - autres) > 0
         rendu = montant_espece - reste
         if rendu > 0
-          MouvementEspece.create!(
-            sens: "sortie",
-            motif: "Rendu monnaie vente n°#{vente.id}",
-            montant: -rendu,
-            date: vente.date_vente,
-            vente: vente
-          )
+          motif_sortie = "Rendu monnaie vente n°#{vente.id}"
+
+          # On stocke le montant en positif, car c'est déjà un sens "sortie"
+          unless MouvementEspece.exists?(sens: "sortie", motif: motif_sortie, vente_id: vente.id)
+            MouvementEspece.create!(
+              sens:    "sortie",
+              motif:   motif_sortie,
+              montant: rendu.round(2),
+              date:    vente.date_vente,
+              vente:   vente
+            )
+          end
         end
 
-        redirect_to especes_path, notice: "Mouvements espèces enregistrés pour la vente n°#{vente.id}."
-        return
+        redirect_to especes_path, notice: "Mouvements en espèces enregistrés pour la vente n°#{vente.id}."
       else
         redirect_to especes_path, alert: "Vente introuvable."
-        return
       end
+
+      return
     end
 
-    # 🧾 Saisie manuelle
-    type = params[:type_operation]
+    # —— GESTION MANUELLE (= sans :vente_id) ——
+    type    = params[:type_operation]
     montant = params[:montant].to_d
-    date = params[:date]
-    compte = params[:compte].presence
+    date    = params[:date]
+    compte  = params[:compte].presence
 
     case type
     when "apport"
-      sens = "entrée"
+      sens  = "entrée"
       motif = "Apport banque"
     when "apport_perso"
-      sens = "entrée"
+      sens  = "entrée"
       motif = "Apport perso"
     when "retrait_perso"
-      sens = "sortie"
+      sens  = "sortie"
       motif = "Retrait perso"
     when "depot_compte"
-      sens = "sortie"
+      sens  = "sortie"
       motif = "Dépôt compte pro"
     else
       redirect_to new_espece_path, alert: "Type d'opération invalide." and return
     end
 
     mouvement = MouvementEspece.new(
-      sens: sens,
-      motif: motif,
+      sens:    sens,
+      motif:   motif,
       montant: montant,
-      date: date,
-      compte: compte
+      date:    date,
+      compte:  compte
     )
 
     if mouvement.save
@@ -99,9 +112,6 @@ class EspecesController < ApplicationController
       render :new, status: :unprocessable_entity
     end
   end
-
-
-
 
   private
 

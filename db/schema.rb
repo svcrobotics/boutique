@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_05_26_124544) do
+ActiveRecord::Schema[8.0].define(version: 2025_05_31_190315) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -48,6 +48,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_26_124544) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "client_id"
+    t.string "motif"
     t.index ["client_id"], name: "index_avoirs_on_client_id"
     t.index ["vente_id"], name: "index_avoirs_on_vente_id"
   end
@@ -200,6 +201,17 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_26_124544) do
     t.index ["produit_id"], name: "index_reassorts_on_produit_id"
   end
 
+  create_table "remboursements", force: :cascade do |t|
+    t.integer "vente_id", null: false
+    t.decimal "montant"
+    t.date "date"
+    t.string "mode"
+    t.string "motif"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["vente_id"], name: "index_remboursements_on_vente_id"
+  end
+
   create_table "ventes", force: :cascade do |t|
     t.integer "client_id"
     t.decimal "prix_vendu"
@@ -260,6 +272,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_26_124544) do
   add_foreign_key "produits_versements", "produits"
   add_foreign_key "produits_versements", "versements"
   add_foreign_key "reassorts", "produits"
+  add_foreign_key "remboursements", "ventes"
   add_foreign_key "ventes", "clients"
   add_foreign_key "ventes", "versements"
   add_foreign_key "ventes_produits", "produits"

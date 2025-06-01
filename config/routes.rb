@@ -1,4 +1,7 @@
 Rails.application.routes.draw do
+  namespace :caisse do
+    get "remboursements/index"
+  end
   
   get "reassorts/new"
   get "reassorts/create"

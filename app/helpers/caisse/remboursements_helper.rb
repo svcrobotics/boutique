@@ -1,0 +1,2 @@
+module Caisse::RemboursementsHelper
+end

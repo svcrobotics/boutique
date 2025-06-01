@@ -41,17 +41,7 @@
       </tr>
     <% end %>
 
-    <% Vente.where("espece > 0").where(annulee: [false, nil]).each do |vente| %>
-      <tr class="bg-green-50">
-        <td class="px-4 py-2"><%= vente.date_vente.to_date %></td>
-        <td class="px-4 py-2">Entrée</td>
-        <td class="px-4 py-2">
-          Paiement client<%= " : #{vente.client.nom}" if vente.client.present? %> — Vente n° <%= vente.id %>
-        </td>
-        <td class="px-4 py-2">-</td>
-        <td class="px-4 py-2"><%= number_to_currency(vente.espece) %></td>
-      </tr>
-    <% end %>
+    
 
   </tbody>
 </table>

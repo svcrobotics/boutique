@@ -1,0 +1,12 @@
+Thu, 24 Apr 2025 10:36:40 +0200
+app/controllers/application_controller.rb	Mon, 31 Mar 2025 22:59:50 +0200
+app/controllers/clients_controller.rb	Sat, 12 Apr 2025 16:14:08 +0200
+app/controllers/clotures_controller.rb	Sun, 13 Apr 2025 18:04:45 +0200
+app/controllers/factures_controller.rb	Sat, 15 Mar 2025 20:20:43 +0100
+app/controllers/fournisseurs_controller.rb	Fri, 14 Mar 2025 21:21:02 +0100
+app/controllers/pages_controller.rb	Tue, 08 Apr 2025 18:49:31 +0200
+app/controllers/paiements_controller.rb	Sun, 13 Apr 2025 12:11:57 +0200
+app/controllers/produits_controller.rb	Thu, 24 Apr 2025 10:28:24 +0200
+app/controllers/stats_controller.rb	Wed, 09 Apr 2025 15:02:56 +0200
+app/controllers/ventes_controller.rb	Sun, 13 Apr 2025 16:31:06 +0200
+app/controllers/versements_controller.rb	Sun, 13 Apr 2025 12:27:08 +0200
