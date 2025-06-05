@@ -1,0 +1,61 @@
+<h1 class="text-xl font-bold mb-4">Historique certifié (Blockchain)</h1>
+
+<table class="w-full border-collapse text-sm">
+  <thead>
+    <tr class="bg-gray-100 text-left">
+      <th class="border p-2">#</th>
+      <th class="border p-2">Date</th>
+      <th class="border p-2">Type</th>
+      <th class="border p-2">Vente ID</th>
+      <th class="border p-2">Produits</th>
+      <th class="border p-2">Total</th>
+      <th class="border p-2">Client</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @blocs.each do |bloc| %>
+      <% next if bloc.index == 0 %>
+      <% data = bloc.data.is_a?(Hash) ? bloc.data : JSON.parse(bloc.data.to_s) rescue {} %>
+      <tr class="border-t <%= case data['type']
+        when 'Annulation' then 'bg-red-100 text-red-800'
+        when 'Vente' then 'bg-green-50'
+        when 'Remboursement produit' then 'bg-yellow-50 text-yellow-800'
+        else 'bg-white'
+      end %>">
+        <td class="border p-2"><%= bloc.index %></td>
+        <td class="border p-2"><%= bloc.timestamp.in_time_zone('Paris').strftime('%d/%m/%Y %H:%M') %></td>
+        <td class="border p-2"><%= data['type'] || '-' %></td>
+        <td class="border p-2">
+          <% if data['vente_id'].present? %>
+            <%= link_to "##{data['vente_id']}", caisse.vente_path(data['vente_id']), class: "text-blue-600 hover:underline" %>
+          <% else %>
+            -
+          <% end %>
+        </td>
+        <td class="border p-2">
+          <% if data['produits'].is_a?(Array) %>
+            <ul>
+              <% data['produits'].each do |prod| %>
+                <li><%= prod['quantite'] %>x <%= prod['nom'] %> – <%= prod['prix'] %>€</li>
+              <% end %>
+            </ul>
+          <% else %>
+            -
+          <% end %>
+        </td>
+        <td class="border p-2"><%= data['total'] || '-' %> €</td>
+        <td class="border p-2"><%= data['client'] || '-' %></td>
+      </tr>
+    <% end %>
+  </tbody>
+
+</table>
+
+<p class="mt-4 text-green-700 font-medium">
+  Blockchain : <%= Blockchain::Service.chain.valid? ? '✅ VALIDE' : '❌ CORROMPUE' %> –
+  <%= @blocs.size - 1 %> opérations certifiées
+</p>
+
+<button onclick="window.print()" class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+  🖨️ Imprimer le listing
+</button>

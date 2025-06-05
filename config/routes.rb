@@ -70,6 +70,9 @@ Rails.application.routes.draw do
 
   mount Caisse::Engine => "/caisse"
 
+  get 'blockchain', to: 'blockchain#index'
+
+
   # get "texte", to: "textes#show", as: :texte
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html

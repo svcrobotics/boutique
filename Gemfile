@@ -105,3 +105,5 @@ gem "rdoc"
 
 # gem "caisse", git: 'https://github.com/svcrobotics/caisse.git'
 gem "caisse", path: "/home/victor/caisse"
+
+gem 'blockchain', path: '/home/victor/blockchain'

@@ -1,4 +1,10 @@
 PATH
+  remote: /home/victor/blockchain
+  specs:
+    blockchain (0.1.0)
+      digest
+
+PATH
   remote: /home/victor/caisse
   specs:
     caisse (0.1.0)
@@ -120,6 +126,7 @@ GEM
       irb (~> 1.10)
       reline (>= 0.3.8)
     diff-lcs (1.6.0)
+    digest (3.2.0)
     dotenv (3.1.7)
     dotenv-rails (3.1.7)
       dotenv (= 3.1.7)
@@ -466,6 +473,7 @@ PLATFORMS
 DEPENDENCIES
   barby
   bcrypt (~> 3.1.7)
+  blockchain!
   bootsnap
   brakeman
   caisse!
