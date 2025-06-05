@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_05_31_190315) do
+ActiveRecord::Schema[8.0].define(version: 2025_06_05_090141) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -123,6 +123,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_31_190315) do
     t.string "compte"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "vente_id"
+    t.index ["vente_id"], name: "index_mouvement_especes_on_vente_id"
   end
 
   create_table "paiements", force: :cascade do |t|
@@ -266,6 +268,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_31_190315) do
   add_foreign_key "avoirs", "clients"
   add_foreign_key "avoirs", "ventes"
   add_foreign_key "factures", "fournisseurs"
+  add_foreign_key "mouvement_especes", "ventes"
   add_foreign_key "paiements", "clients"
   add_foreign_key "paiements_ventes", "paiements"
   add_foreign_key "paiements_ventes", "ventes"

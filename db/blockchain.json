@@ -114,5 +114,300 @@
     },
     "previous_hash": "d5f6db540d05ddd42fc229ffc36c202a6f9a4ec76860060dde8a68a0a2f2dc4f",
     "hash": "a54707c7df69abea424e6d49693aafa3db8413541bd5e96d2b7844aac14b9e61"
+  },
+  {
+    "index": 6,
+    "timestamp": "2025-06-05 08:43:27 UTC",
+    "data": {
+      "vente_id": 127,
+      "produits": [
+        {
+          "nom": "Produit_1",
+          "quantite": 1,
+          "prix": "15.0"
+        },
+        {
+          "nom": "Test_produit_neuf",
+          "quantite": 1,
+          "prix": "39.0"
+        }
+      ],
+      "total": "50.0",
+      "client": null,
+      "type": "Vente"
+    },
+    "previous_hash": "a54707c7df69abea424e6d49693aafa3db8413541bd5e96d2b7844aac14b9e61",
+    "hash": "44319db8f61b7de1ad70425a074e1cac005249cf509108ce7ba4bf891c7dcce6"
+  },
+  {
+    "index": 7,
+    "timestamp": "2025-06-05 08:44:56 UTC",
+    "data": {
+      "vente_id": 127,
+      "type": "Remboursement produit",
+      "produits": [
+        {
+          "nom": "Test_produit_neuf",
+          "quantite": 1,
+          "prix": "39.0"
+        }
+      ],
+      "total": "36.11",
+      "remboursement": "avoir",
+      "motif": "Sans motif",
+      "client": null
+    },
+    "previous_hash": "44319db8f61b7de1ad70425a074e1cac005249cf509108ce7ba4bf891c7dcce6",
+    "hash": "aa740121e0f9f592692da0c9b03afe5b9adbddf354859f9864978363dd81d0a1"
+  },
+  {
+    "index": 8,
+    "timestamp": "2025-06-05 08:46:00 UTC",
+    "data": {
+      "vente_id": 128,
+      "produits": [
+        {
+          "nom": "Test_produit_neuf",
+          "quantite": 1,
+          "prix": "39.0"
+        }
+      ],
+      "total": "2.89",
+      "client": null,
+      "type": "Vente"
+    },
+    "previous_hash": "aa740121e0f9f592692da0c9b03afe5b9adbddf354859f9864978363dd81d0a1",
+    "hash": "ea6cf5295cd1f1c8bff2c7636cb078d5b5a3c700d40b75548c4d917f9a5aa5c1"
+  },
+  {
+    "index": 9,
+    "timestamp": "2025-06-05 08:56:56 UTC",
+    "data": {
+      "vente_id": 129,
+      "produits": [
+        {
+          "nom": "Test_produit_neuf",
+          "quantite": 1,
+          "prix": "39.0"
+        }
+      ],
+      "total": "39.0",
+      "client": null,
+      "type": "Vente"
+    },
+    "previous_hash": "ea6cf5295cd1f1c8bff2c7636cb078d5b5a3c700d40b75548c4d917f9a5aa5c1",
+    "hash": "9ccea53ea5ddcacad4ce72fa87f20a4db13bef5b7df50ff16804dddf108a7180"
+  },
+  {
+    "index": 10,
+    "timestamp": "2025-06-05 09:03:47 UTC",
+    "data": {
+      "vente_id": 130,
+      "produits": [
+        {
+          "nom": "Test_produit_neuf",
+          "quantite": 1,
+          "prix": "39.0"
+        }
+      ],
+      "total": "39.0",
+      "client": null,
+      "type": "Vente"
+    },
+    "previous_hash": "9ccea53ea5ddcacad4ce72fa87f20a4db13bef5b7df50ff16804dddf108a7180",
+    "hash": "a67bb06cb6bb2cd153ef31d23f9359a3a696d3cd40afa431adfea321c301e554"
+  },
+  {
+    "index": 11,
+    "timestamp": "2025-06-05 09:04:47 UTC",
+    "data": {
+      "vente_id": 131,
+      "produits": [
+        {
+          "nom": "Test_produit_neuf",
+          "quantite": 1,
+          "prix": "39.0"
+        }
+      ],
+      "total": "39.0",
+      "client": null,
+      "type": "Vente"
+    },
+    "previous_hash": "a67bb06cb6bb2cd153ef31d23f9359a3a696d3cd40afa431adfea321c301e554",
+    "hash": "faf61c0258d0d309c2e15ebdef999ea1673fcb922337ef1818666b07033ce412"
+  },
+  {
+    "index": 12,
+    "timestamp": "2025-06-05 09:08:11 UTC",
+    "data": {
+      "vente_id": 132,
+      "produits": [
+        {
+          "nom": "Test_produit_neuf",
+          "quantite": 1,
+          "prix": "39.0"
+        }
+      ],
+      "total": "39.0",
+      "client": null,
+      "type": "Vente"
+    },
+    "previous_hash": "faf61c0258d0d309c2e15ebdef999ea1673fcb922337ef1818666b07033ce412",
+    "hash": "b64eb03abce3092d9eaae8d1812309aa45223ce50bf9841ce0ffa36992359997"
+  },
+  {
+    "index": 13,
+    "timestamp": "2025-06-05 09:15:27 UTC",
+    "data": {
+      "vente_id": 132,
+      "type": "Annulation",
+      "total": "39.0",
+      "client": null,
+      "remboursement": "aucun",
+      "motif": "test",
+      "produits": [
+        {
+          "nom": "Test_produit_neuf",
+          "quantite": 1,
+          "prix": "39.0"
+        }
+      ]
+    },
+    "previous_hash": "b64eb03abce3092d9eaae8d1812309aa45223ce50bf9841ce0ffa36992359997",
+    "hash": "03343e3ced62b740e31835a80397809e2e927ce2e82076763215524d76816784"
+  },
+  {
+    "index": 14,
+    "timestamp": "2025-06-05 09:16:22 UTC",
+    "data": {
+      "vente_id": 126,
+      "type": "Annulation",
+      "total": "54.0",
+      "client": null,
+      "remboursement": "aucun",
+      "motif": "test",
+      "produits": [
+        {
+          "nom": "Test_produit_neuf",
+          "quantite": 1,
+          "prix": "39.0"
+        },
+        {
+          "nom": "Produit_1",
+          "quantite": 1,
+          "prix": "15.0"
+        }
+      ]
+    },
+    "previous_hash": "03343e3ced62b740e31835a80397809e2e927ce2e82076763215524d76816784",
+    "hash": "936fec7e4eae371d812d822a4a17dd6e88c774f88427e5a488c4bc41c1d9e149"
+  },
+  {
+    "index": 15,
+    "timestamp": "2025-06-05 09:17:03 UTC",
+    "data": {
+      "vente_id": 125,
+      "type": "Annulation",
+      "total": "54.0",
+      "client": null,
+      "remboursement": "avoir",
+      "motif": "test",
+      "produits": [
+        {
+          "nom": "Test_produit_neuf",
+          "quantite": 1,
+          "prix": "39.0"
+        },
+        {
+          "nom": "Produit_1",
+          "quantite": 1,
+          "prix": "15.0"
+        }
+      ]
+    },
+    "previous_hash": "936fec7e4eae371d812d822a4a17dd6e88c774f88427e5a488c4bc41c1d9e149",
+    "hash": "414c93308838c9953537c0d3d8d3dd5eb3fdc3a1b2a93e57c54e0f0069e3c558"
+  },
+  {
+    "index": 16,
+    "timestamp": "2025-06-05 10:12:43 UTC",
+    "data": {
+      "vente_id": 131,
+      "type": "Annulation",
+      "total": "39.0",
+      "client": null,
+      "remboursement": "aucun",
+      "motif": "test",
+      "produits": [
+        {
+          "nom": "Test_produit_neuf",
+          "quantite": 1,
+          "prix": "39.0"
+        }
+      ]
+    },
+    "previous_hash": "414c93308838c9953537c0d3d8d3dd5eb3fdc3a1b2a93e57c54e0f0069e3c558",
+    "hash": "7e25ed5ad33d8ba8e54a680d67bfee47a38a33b13c3c50eced7b0ffe30254fd1"
+  },
+  {
+    "index": 17,
+    "timestamp": "2025-06-05 10:12:59 UTC",
+    "data": {
+      "vente_id": 123,
+      "type": "Annulation",
+      "total": "15.0",
+      "client": null,
+      "remboursement": "cb",
+      "motif": "test",
+      "produits": [
+        {
+          "nom": "Produit_1",
+          "quantite": 1,
+          "prix": "15.0"
+        }
+      ]
+    },
+    "previous_hash": "7e25ed5ad33d8ba8e54a680d67bfee47a38a33b13c3c50eced7b0ffe30254fd1",
+    "hash": "232ee3022e8cf5112e21ce3b6e05258424c1281998139352f680568521057479"
+  },
+  {
+    "index": 18,
+    "timestamp": "2025-06-05 10:17:03 UTC",
+    "data": {
+      "vente_id": 133,
+      "produits": [
+        {
+          "nom": "Produit_1",
+          "quantite": 1,
+          "prix": "15.0"
+        }
+      ],
+      "total": "15.0",
+      "client": null,
+      "type": "Vente"
+    },
+    "previous_hash": "232ee3022e8cf5112e21ce3b6e05258424c1281998139352f680568521057479",
+    "hash": "83824ad42e5330ec146b37593cf19ebab61e54fe206af397eae84d7d97187514"
+  },
+  {
+    "index": 19,
+    "timestamp": "2025-06-05 10:17:25 UTC",
+    "data": {
+      "vente_id": 133,
+      "type": "Annulation",
+      "total": "15.0",
+      "client": null,
+      "remboursement": "avoir",
+      "motif": "test",
+      "produits": [
+        {
+          "nom": "Produit_1",
+          "quantite": 1,
+          "prix": "15.0"
+        }
+      ]
+    },
+    "previous_hash": "83824ad42e5330ec146b37593cf19ebab61e54fe206af397eae84d7d97187514",
+    "hash": "d3d5fd331c7ef78b4726904ace52f94867e62219947d91aed3d1db59e6561928"
   }
 ]
