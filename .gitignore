@@ -39,3 +39,4 @@
 !/app/assets/builds/.keep
 
 /public/docstorage/
+/storage/development.sqlite3
