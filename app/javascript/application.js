@@ -1,6 +1,6 @@
 // Configure your import map in config/importmap.rb. Read more: https://github.com/rails/importmap-rails
 import "@hotwired/turbo-rails"
-import "./controllers"
+// import "./controllers"
 
 //import Rails from "@rails/ujs"
 //Rails.start()
@@ -26,5 +26,11 @@ document.addEventListener("DOMContentLoaded", () => {
     scanInput.value = ""
   })
 
-  setInterval(() => scanInput.focus(), 1000)
+  setInterval(() => {
+    // Ne force le focus QUE si aucun élément n'est actuellement en focus
+    if (document.activeElement === document.body) {
+      scanInput.focus()
+    }
+  }, 1000)
+
 })

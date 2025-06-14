@@ -24,37 +24,67 @@
                     id: "produit_etat" %>
   </div>
 
-  <% if @produit.photos.attached? %>
-    <div class="mb-4">
-      <p class="font-medium text-gray-700 mb-2">Photos existantes :</p>
-      <div class="flex flex-wrap gap-2">
-        <% @produit.photos.each do |photo| %>
-          <div class="relative">
-            <%= image_tag photo.variant(resize_to_limit: [100, 100]), class: "rounded shadow" %>
-            <%= link_to "✕", supprimer_photo_produit_path(@produit, photo_id: photo.id),
-            method: :delete,
-            data: { turbo_method: :delete, confirm: "Supprimer cette photo ?" },
-            class: "absolute top-0 right-0 bg-red-500 text-white text-xs px-1 rounded-full" %>
-          </div>
-        <% end %>
-      </div>
-    </div>
+  <% if @produit.photos_url.present? %>
+    <ul class="space-y-2 mt-4">
+      <% @produit.photos_url.split(",").map(&:strip).each_with_index do |url, i| %>
+        <% transformed_url = if url.include?("drive.google.com/file/d/")
+            "https://drive.google.com/uc?id=#{url.match(/\/d\/(.*?)\//)[1]}"
+          else
+            url
+          end rescue url %>
+        <li>
+          <%= link_to "📷 Photo #{i + 1}", transformed_url, target: "_blank", class: "text-blue-600 underline hover:text-blue-800" %>
+        </li>
+      <% end %>
+    </ul>
   <% end %>
 
 
   <div class="mb-4">
-    <%= form.label :photos, "Ajouter des photos", class: "block font-medium text-gray-700" %>
-    <%= form.file_field :photos, multiple: true, direct_upload: true,
-        class: "w-full border-gray-300 shadow-sm rounded" %>
-    <p class="text-sm text-gray-500">Laisser vide si tu ne veux pas ajouter d'autres photos.</p>
+    <%= form.label :photos_url, "Lien(s) Google Drive (séparés par des virgules)", class: "block font-medium text-gray-700" %>
+    <%= form.text_area :photos_url, rows: 2, class: "w-full border-gray-300 shadow-sm rounded", id: "photos_url_field" %>
+    <button type="button" onclick="convertDriveLinks()" class="mt-2 bg-blue-500 text-white px-2 py-1 rounded">
+      🔁 Convertir les liens
+    </button>
+    <p class="text-sm text-gray-500 mt-1">Ex : https://drive.google.com/file/d/ID/view</p>
   </div>
 
+  <script>
+    function convertDriveLinks() {
+      const textarea = document.getElementById("photos_url_field");
+      const lines = textarea.value.split(/[\s,]+/);
+      const converted = lines.map(link => {
+        const match = link.match(/\/d\/(.*?)\//);
+        return match ? `https://drive.google.com/uc?id=${match[1]}` : link;
+      });
+      textarea.value = converted.join(", ");
+    }
+  </script>
 
   <!-- Nom -->
   <div>
     <%= form.label :nom, "Nom du produit", class: "block text-sm font-medium text-gray-700" %>
     <%= form.text_field :nom, class: "mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" %>
   </div>
+
+  <!-- Champ pour le lien image Drive -->
+  <div class="mb-4">
+    <%= form.label :image_url, "Lien Google Drive (format uc?id=...)", class: "block font-medium" %>
+    <%= text_field_tag :image_url, "", class: "border w-full", id: "image_url_input" %>
+  </div>
+
+
+  <!-- Description -->
+  <div class="mb-4">
+    <div class="flex items-center justify-between">
+      <%= form.label :description, "Description", class: "block font-bold" %>
+      <button type="button" id="btn-generate-ai" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
+        Générer par IA
+      </button>
+    </div>
+    <%= form.text_area :description, rows: 6, class: "border w-full", id: "produit_description" %>
+  </div>
+
 
   <!-- Stock -->
   <div>
@@ -168,55 +198,90 @@
 <% end %>
 
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
-  const etatField = document.querySelector("#produit_etat")
-  const neufOccasionFields = document.querySelector("#neuf-occasion-fields")
-  const depotVenteFields = document.querySelector("#depot-vente-fields")
+  document.addEventListener("turbo:load", function () {
+    const button = document.getElementById("btn-generate-ai");
+    const textarea = document.getElementById("produit_description");
+    const imageUrlInput = document.getElementById("image_url_input");
 
-  const stockInput = document.querySelector("#produit_stock")
-  const dateDepotInput = document.querySelector("#produit_date_depot")
-  const prixDeposantInput = document.querySelector("#produit_prix_deposant")
-  const prixVenteInput = document.querySelector("#produit_prix")
-  const imprimCodeBarreCheckbox = document.querySelector("#produit_impression_code_barre")
+    if (!button || !textarea || !imageUrlInput) {
+      console.warn("Éléments introuvables dans le DOM (bouton, textarea ou input image)");
+      return;
+    }
 
-  function toggleFields() {
-    const selectedEtat = etatField.value
-
-    if (selectedEtat === "depot_vente") {
-      depotVenteFields.classList.remove("hidden")
-      neufOccasionFields.classList.add("hidden")
-
-      // Valeurs par défaut
-      //if (stockInput) stockInput.value = 1
-
-      if (dateDepotInput && !dateDepotInput.value) {
-        const today = new Date().toISOString().split("T")[0]
-        dateDepotInput.value = today
+    button.addEventListener("click", () => {
+      const imageUrl = imageUrlInput.value.trim();
+      if (!imageUrl) {
+        alert("Merci de renseigner un lien d'image.");
+        return;
       }
 
-      if (imprimCodeBarreCheckbox) imprimCodeBarreCheckbox.checked = true
+      console.log("URL envoyée à GPT-4o :", imageUrl);
 
-      // Prix auto dès qu’on saisit prix déposant
-      if (prixDeposantInput && prixVenteInput) {
-        prixDeposantInput.addEventListener("input", function () {
-          const val = parseFloat(this.value)
-          if (!isNaN(val)) prixVenteInput.value = (val * 2 - 1).toFixed(2)
-        })
-      }
+      button.disabled = true;
+      const originalText = button.textContent;
+      button.textContent = "Génération en cours...";
+
+      fetch("<%= generer_description_ai_produits_path %>", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": document.querySelector("meta[name='csrf-token']").content
+        },
+        body: JSON.stringify({ image_url: imageUrl })
+      })
+      .then(response => {
+        console.log("Réponse brute :", response);
+        return response.json();
+      })
+      .then(data => {
+        console.log("Réponse JSON :", data);
+        if (data.description) {
+          textarea.value = data.description;
+        } else if (data.error) {
+          alert("Erreur IA : " + data.error);
+        } else {
+          alert("Aucune description reçue.");
+        }
+      })
+      .catch(error => {
+        console.error("Erreur réseau :", error);
+        alert("Erreur réseau : " + error.message);
+      })
+      .finally(() => {
+        button.disabled = false;
+        button.textContent = originalText;
+      });
+    });
+  });
+</script>
+
+<script>
+  function toggleProduitFields() {
+    const etat = document.querySelector("#produit_etat");
+    const neufOccasion = document.querySelector("#neuf-occasion-fields");
+    const depotVente = document.querySelector("#depot-vente-fields");
+
+    if (!etat || !neufOccasion || !depotVente) return;
+
+    if (etat.value === "depot_vente") {
+      depotVente.classList.remove("hidden");
+      neufOccasion.classList.add("hidden");
     } else {
-      neufOccasionFields.classList.remove("hidden")
-      depotVenteFields.classList.add("hidden")
-
-      // Ne pas forcer les champs si pas dépôt
-      if (stockInput && stockInput.value == 1) stockInput.value = ""
+      neufOccasion.classList.remove("hidden");
+      depotVente.classList.add("hidden");
     }
   }
 
-  // Initialiser à l’ouverture
-  toggleFields()
+  document.addEventListener("turbo:load", () => {
+    console.log("[Turbo] JS chargé");
+    toggleProduitFields(); // Initialisation au chargement
 
-  // Changement en direct
-  etatField.addEventListener("change", toggleFields)
-});
-
+    const etatField = document.querySelector("#produit_etat");
+    if (etatField) {
+      etatField.addEventListener("change", () => {
+        console.log("Changement d’état :", etatField.value);
+        toggleProduitFields();
+      });
+    }
+  });
 </script>

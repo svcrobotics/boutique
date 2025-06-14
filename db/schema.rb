@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_06_05_090141) do
+ActiveRecord::Schema[8.0].define(version: 2025_06_14_113733) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -176,6 +176,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_05_090141) do
     t.integer "taux_remise_fournisseur"
     t.boolean "en_promo"
     t.decimal "prix_promo"
+    t.boolean "en_ligne", default: false, null: false
+    t.string "shopify_id"
+    t.text "photos_url"
   end
 
   create_table "produits_versements", force: :cascade do |t|

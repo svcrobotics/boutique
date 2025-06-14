@@ -14,9 +14,6 @@ class Produit < ApplicationRecord
   has_many :versements, through: :produits_versements
   has_many :reassorts, dependent: :destroy
 
-  has_many_attached :photos
-  has_many_attached :images # ← tu peux supprimer celui que tu n’utilises pas
-
   ### === VALIDATIONS ===
   validates :nom, presence: true, length: { maximum: 35 }
   validates :categorie, inclusion: { in: CATEGORIES }

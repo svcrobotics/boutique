@@ -78,6 +78,7 @@
           <% end %>
 
           <!--<th class="px-4 py-2 text-left">Remise</th>-->
+          <th class="px-4 py-2">En ligne</th>
           <th class="px-4 py-2 text-left">Actions</th>
         </tr>
       </thead>
@@ -130,6 +131,15 @@
               <!--<td class="px-4 py-2">
                 <%= produit.remise_fournisseur? ? "#{produit.taux_remise_fournisseur} %" : "—" %>
               </td>-->
+              <td class="px-4 py-2 text-center">
+                <% if produit.en_ligne %>
+                  🟢
+                <% else %>
+                  🔴
+                <% end %>
+              </td>
+
+
 
               <td class="px-4 py-2 flex space-x-2">
                 <%= button_to "Voir", produit_path(produit), method: :get,

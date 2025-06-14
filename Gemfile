@@ -107,3 +107,9 @@ gem "rdoc"
 gem "caisse", path: "/home/victor/caisse"
 
 gem 'blockchain', path: '/home/victor/blockchain'
+
+gem "shopify_api"
+
+gem "ruby-openai"
+
+gem "dotenv-rails", groups: [:development, :test]

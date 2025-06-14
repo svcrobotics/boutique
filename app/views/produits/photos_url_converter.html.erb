@@ -1,0 +1,18 @@
+<h2 class="text-lg font-bold mb-2">Convertisseur de liens Google Drive</h2>
+
+<%= form_with url: photos_url_converter_produits_path, method: :get, local: true do %>
+  <div class="mb-4">
+    <%= label_tag :raw_links, "Colle ici tes liens Drive :", class: "block font-medium" %>
+    <%= text_area_tag :raw_links, params[:raw_links], rows: 6, class: "w-full border rounded" %>
+  </div>
+  <%= submit_tag "Convertir", class: "bg-blue-600 text-white px-4 py-2 rounded" %>
+<% end %>
+
+<% if @liens_directs.present? %>
+  <h3 class="mt-6 mb-2 font-semibold">Liens directs à copier :</h3>
+  <textarea rows="5" class="w-full border rounded text-sm"><%= @liens_directs.join(", ") %></textarea>
+
+  <p class="text-sm text-gray-600 mt-2">
+    Tu peux copier ces liens dans le champ « Lien(s) Google Drive » lors de la création d’un produit.
+  </p>
+<% end %>

@@ -50,6 +50,125 @@ class ProduitsController < ApplicationController
     end
   end
 
+  require 'open-uri'
+  require 'base64'
+
+  def generer_description_ai
+    image_url = params[:image_url]
+    return render json: { error: "URL manquante" }, status: :unprocessable_entity unless image_url
+
+    # Télécharger l'image depuis le lien Drive (format https://drive.google.com/uc?id=...)
+    begin
+      image_data = URI.open(image_url).read
+    rescue => e
+      return render json: { error: "Erreur lors du téléchargement de l'image : #{e.message}" }, status: :bad_request
+    end
+
+    # Convertir l'image en base64
+    encoded_image = Base64.strict_encode64(image_data)
+
+    client = OpenAI::Client.new
+
+    response = client.chat(
+      parameters: {
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "Tu es un expert en mode. Tu rédiges des descriptions pour des vêtements à partir de photos. Ignore tout ce qui n'est pas un vêtement."
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: "Voici la photo d’un vêtement. Décris-le pour une fiche produit mode."
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: "data:image/jpeg;base64,#{encoded_image}"
+                }
+              }
+            ]
+          }
+        ],
+        temperature: 0.7
+      }
+    )
+
+    description = response.dig("choices", 0, "message", "content")
+    render json: { description: description }
+  end
+
+
+
+  def photos_url_converter
+    raw_links = params[:raw_links].to_s
+
+    @liens_directs = raw_links.split(/[\s,]+/).map do |link|
+      if link.include?("drive.google.com")
+        if link =~ /id=([\w-]+)/
+          "https://drive.google.com/uc?id=#{$1}"
+        elsif link =~ %r{/d/([\w-]+)}
+          "https://drive.google.com/uc?id=#{$1}"
+        else
+          nil
+        end
+      else
+        link # Lien inchangé si ce n’est pas un lien Drive
+      end
+    end.compact
+
+    render :photos_url_converter
+  end
+
+
+  def envoyer_shopify
+    produit = Produit.find(params[:id])
+
+    session = ShopifyAPI::Auth::Session.new(
+      shop: ENV.fetch("SHOPIFY_HOST_NAME"),
+      access_token: ENV.fetch("SHOPIFY_ACCESS_TOKEN")
+    )
+    client = ShopifyAPI::Clients::Rest::Admin.new(session: session)
+
+    # Préparation des URLs d’images hébergées sur Google Drive
+    photo_urls = produit.photos_url.to_s.split(",").map(&:strip)
+
+    shopify_payload = {
+      product: {
+        title: produit.nom,
+        body_html: "<p>#{produit.description}</p>",
+        vendor: "Vintage-Royan",
+        product_type: produit.categorie || "vêtement",
+        tags: [produit.etat, ("neuf" if produit.neuf), ("occasion" if produit.occasion)].compact.join(","),
+        variants: [
+          {
+            price: produit.prix.to_f.to_s,
+            sku: produit.code_barre || "SKU-#{produit.id}",
+            inventory_quantity: produit.stock || 1
+          }
+        ],
+        images: photo_urls.map { |url| { src: url } }
+      }
+    }
+
+    if produit.shopify_id.present?
+      response = client.put(path: "products/#{produit.shopify_id}", body: shopify_payload)
+    else
+      response = client.post(path: "products", body: shopify_payload)
+      produit.update(shopify_id: response.body["product"]["id"]) if response.body["product"]
+    end
+
+    if response.body["product"]
+      produit.update(en_ligne: true)
+      redirect_to produit, notice: "✅ Produit synchronisé avec Shopify avec images !"
+    else
+      redirect_to produit, alert: "❌ Erreur Shopify : #{response.body.inspect}"
+    end
+  end
+
 
   def new
     @produit = Produit.new
@@ -81,18 +200,8 @@ class ProduitsController < ApplicationController
   def update
     @produit.en_depot = false if params[:produit][:etat] != "depot_vente"
 
-    puts "🔎 params[:produit] = #{params[:produit].inspect}"
-
     produit_data = produit_params.dup
-
-    # ✅ Corrige le problème de case décochée non envoyée
     produit_data[:impression_code_barre] = false unless produit_data.key?(:impression_code_barre)
-
-    # Gestion des images
-    if produit_data[:images].present?
-      produit_data[:images].reject!(&:blank?)
-      @produit.images.attach(produit_data[:images])
-    end
 
     if @produit.update(produit_data)
       redirect_to @produit, notice: "Produit mis à jour avec succès."
@@ -100,7 +209,6 @@ class ProduitsController < ApplicationController
       render :edit, status: :unprocessable_entity
     end
   end
-
 
 
   def show
@@ -281,6 +389,6 @@ class ProduitsController < ApplicationController
     params.require(:produit).permit(:code_fournisseur, :code_barre, :impression_code_barre, :etat,
     :vendu, :prix_deposant, :date_depot, :produit_id, :observation, :nom, :description, :prix,
     :prix_achat, :stock, :categorie, :date_achat, :facture, :fournisseur_id, :client_id, :en_depot, :remise_fournisseur, 
-    :taux_remise_fournisseur, :en_promo, :prix_promo, photos: [])
+    :taux_remise_fournisseur, :en_promo, :prix_promo, :photos_url)
   end
 end

@@ -2,16 +2,22 @@
 
 <div class="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md">
 
-  <!-- 📌 Affichage de l'image principale -->
-  <div class="mb-4">
-    <% if @produit.photos.attached? %>
-      <div class="grid grid-cols-2 gap-2">
-        <% @produit.photos.each do |photo| %>
-          <%= image_tag photo.variant(resize_to_limit: [300, 300]), class: "rounded shadow" %>
-        <% end %>
-      </div>
-    <% end %>
-  </div>
+  <% if @produit.photos_url.present? %>
+    <ul class="space-y-2 mt-4">
+      <% @produit.photos_url.split(",").map(&:strip).each_with_index do |url, i| %>
+        <% transformed_url = if url.include?("drive.google.com/file/d/")
+            "https://drive.google.com/uc?id=#{url.match(/\/d\/(.*?)\//)[1]}"
+          else
+            url
+          end rescue url %>
+        <li>
+          <%= link_to "📷 Photo #{i + 1}", transformed_url, target: "_blank", class: "text-blue-600 underline hover:text-blue-800" %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+
+
 
   <!-- 📌 Informations générales -->
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -79,19 +85,6 @@
     <p class="text-gray-600"><strong>Impression code-barre :</strong> <%= @produit.impression_code_barre? ? "Oui" : "Non" %></p>
   </div>
 
-  <!-- 📌 Autres images -->
-  <% if @produit.images.attached? && @produit.images.count > 1 %>
-    <div class="mt-6">
-      <h3 class="text-lg font-semibold">Autres images</h3>
-      <div class="grid grid-cols-3 gap-4 mt-2">
-        <% @produit.images.each_with_index do |image, index| %>
-          <% next if index == 0 %> <!-- On ignore la première image déjà affichée -->
-          <%= image_tag image.variant(resize_to_limit: [150, 150]), class: "rounded shadow" %>
-        <% end %>
-      </div>
-    </div>
-  <% end %>
-
   <h2 class="text-xl font-bold mt-8 mb-3">📦 Réassorts</h2>
 
   <% if @produit.reassorts.any? %>
@@ -135,5 +128,8 @@
     <%= link_to "Retour", produits_path, class: "text-blue-500 hover:underline" %> |
     <%= link_to "➕ Ajouter un réassort", new_produit_reassort_path(@produit),
             class: "px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700" %>
+  </div>
+  <div class="mt-6">
+    <%= button_to "Envoyer sur Shopify", envoyer_shopify_produit_path(@produit), method: :post, data: { confirm: "Envoyer ce produit sur Shopify ?" }, class: "bg-green-600 text-white rounded px-4 py-2" %>
   </div>
 </div>

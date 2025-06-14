@@ -51,10 +51,13 @@ Rails.application.routes.draw do
     member do
       post :generate_label
       get "supprimer_photo/:photo_id", action: :supprimer_photo, as: :supprimer_photo
+      post :envoyer_shopify
     end
 
     collection do
       post :generate_multiple_labels
+      post :generer_description_ai
+      get :photos_url_converter
     end
 
     resources :reassorts, only: [:new, :create] do
@@ -71,6 +74,8 @@ Rails.application.routes.draw do
   mount Caisse::Engine => "/caisse"
 
   get 'blockchain', to: 'blockchain#index'
+
+  get "shopify/ping", to: "shopify#ping"
 
 
   # get "texte", to: "textes#show", as: :texte
